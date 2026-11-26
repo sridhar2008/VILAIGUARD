@@ -18,6 +18,7 @@ import com.example.domain.model.Product
 import com.example.domain.model.ProductCategory
 import com.example.domain.model.ProductReview
 import com.example.domain.model.ProductUnit
+import com.example.domain.model.PromotionalBanner
 import com.example.domain.model.SavedAddress
 import com.example.domain.model.SupportTicket
 import com.example.domain.model.UserProfile
@@ -184,10 +185,35 @@ class VilaiguardRepository(
       uid,
     ) { it.createdAt?.seconds ?: 0L }
 
+  fun observeBanners(uid: String): Flow<List<PromotionalBanner>> = flow {
+    emitAll(
+      db.collection("banners").whereEqualTo("workspaceOwnerId", uid)
+        .snapshots()
+        .map { snapshot ->
+          snapshot
+            .toObjects(PromotionalBanner::class.java, ServerTimestampBehavior.ESTIMATE)
+            .sortedWith(compareBy<PromotionalBanner> { it.priority }.thenByDescending { it.createdAt?.seconds ?: 0L })
+        }
+        .catch { error ->
+          val firestoreError =
+            generateSequence(error) { it.cause }
+              .filterIsInstance<FirebaseFirestoreException>()
+              .firstOrNull()
+          if (firestoreError == null && error is CancellationException) throw error
+          val ex = firestoreError ?: (error as? Exception)
+          if (ex != null && auth.currentUser?.uid == uid) {
+            handleFirestoreError(ex, OperationType.LIST, "banners")
+          }
+          throw error
+        }
+    )
+  }
+
   suspend fun ensureUserAndSeedWorkspace(displayName: String, email: String): Result<Unit> {
     val uid = auth.currentUser?.uid ?: return Result.failure(IllegalStateException("Not signed in"))
     return try {
       DemoSeedHelper.seedWorkspaceIfEmpty(db, uid, displayName, email)
+      DemoSeedHelper.ensureBannersSeeded(db, uid)
       Result.success(Unit)
     } catch (e: CancellationException) {
       throw e
@@ -1206,6 +1232,102 @@ class VilaiguardRepository(
       throw e
     } catch (e: Exception) {
       handleFirestoreError(e, OperationType.UPDATE, "notifications/$notificationId")
+      Result.failure(e)
+    }
+  }
+
+  // --- PROMOTIONAL BANNERS CMS ---
+
+  suspend fun saveBanner(
+    existingId: String?,
+    title: String,
+    subtitle: String,
+    ctaLabel: String,
+    targetSection: String,
+    themeStyle: String,
+    imageKey: String,
+    active: Boolean,
+    priority: Long,
+    scheduleNote: String,
+  ): Result<Unit> {
+    val uid = auth.currentUser?.uid ?: return Result.failure(IllegalStateException("Not signed in"))
+    val docRef =
+      if (existingId.isNullOrBlank()) db.collection("banners").document()
+      else db.collection("banners").document(existingId)
+    return try {
+      require(title.trim().isNotEmpty() && subtitle.trim().isNotEmpty() && ctaLabel.trim().isNotEmpty()) {
+        "Banner title, subtitle, and button label are required."
+      }
+      val safeSection = if (targetSection in setOf("MARKET", "ORGANIC", "BULK", "FARMERS", "ORDERS")) targetSection else "MARKET"
+      val safeTheme = if (themeStyle in setOf("FOREST", "HARVEST", "TERRACOTTA", "OLIVE")) themeStyle else "FOREST"
+      val safePriority = priority.coerceIn(0L, 1000L)
+
+      if (existingId.isNullOrBlank()) {
+        docRef.set(
+          mapOf(
+            "workspaceOwnerId" to uid,
+            "title" to title.trim().take(100),
+            "subtitle" to subtitle.trim().take(240),
+            "ctaLabel" to ctaLabel.trim().take(40),
+            "targetSection" to safeSection,
+            "themeStyle" to safeTheme,
+            "imageKey" to imageKey.trim().ifBlank { "farmland" }.take(60),
+            "active" to active,
+            "priority" to safePriority,
+            "scheduleNote" to scheduleNote.trim().ifBlank { "All Season" }.take(80),
+            "createdAt" to FieldValue.serverTimestamp(),
+            "updatedAt" to FieldValue.serverTimestamp(),
+          )
+        ).await()
+      } else {
+        docRef.update(
+          mapOf(
+            "title" to title.trim().take(100),
+            "subtitle" to subtitle.trim().take(240),
+            "ctaLabel" to ctaLabel.trim().take(40),
+            "targetSection" to safeSection,
+            "themeStyle" to safeTheme,
+            "imageKey" to imageKey.trim().ifBlank { "farmland" }.take(60),
+            "active" to active,
+            "priority" to safePriority,
+            "scheduleNote" to scheduleNote.trim().ifBlank { "All Season" }.take(80),
+            "updatedAt" to FieldValue.serverTimestamp(),
+          )
+        ).await()
+      }
+      Result.success(Unit)
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Exception) {
+      handleFirestoreError(e, OperationType.WRITE, docRef.path)
+      Result.failure(e)
+    }
+  }
+
+  suspend fun toggleBannerActive(bannerId: String, active: Boolean): Result<Unit> {
+    return try {
+      requireUserId()
+      db.collection("banners").document(bannerId)
+        .update(mapOf("active" to active, "updatedAt" to FieldValue.serverTimestamp()))
+        .await()
+      Result.success(Unit)
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Exception) {
+      handleFirestoreError(e, OperationType.UPDATE, "banners/$bannerId")
+      Result.failure(e)
+    }
+  }
+
+  suspend fun deleteBanner(bannerId: String): Result<Unit> {
+    return try {
+      requireUserId()
+      db.collection("banners").document(bannerId).delete().await()
+      Result.success(Unit)
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Exception) {
+      handleFirestoreError(e, OperationType.DELETE, "banners/$bannerId")
       Result.failure(e)
     }
   }

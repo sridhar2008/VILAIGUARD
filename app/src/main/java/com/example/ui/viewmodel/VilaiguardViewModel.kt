@@ -17,6 +17,7 @@ import com.example.domain.model.Product
 import com.example.domain.model.ProductCategory
 import com.example.domain.model.ProductReview
 import com.example.domain.model.ProductUnit
+import com.example.domain.model.PromotionalBanner
 import com.example.domain.model.SavedAddress
 import com.example.domain.model.SupportTicket
 import com.example.domain.model.UiState
@@ -155,6 +156,9 @@ class VilaiguardViewModel(
 
   val reviews: StateFlow<UiState<List<ProductReview>>> =
     repository.observeReviews(currentUserId).toUiState("reviews")
+
+  val banners: StateFlow<UiState<List<PromotionalBanner>>> =
+    repository.observeBanners(currentUserId).toUiState("banners")
 
   val stats: StateFlow<DashboardStats> =
     combine(orders, products, farmers, logisticsPartners) { ordS, prodS, farmS, logS ->
@@ -472,6 +476,58 @@ class VilaiguardViewModel(
 
   fun markNotificationRead(id: String) {
     viewModelScope.launch { repository.markNotificationRead(id) }
+  }
+
+  fun saveBanner(
+    existingId: String?,
+    title: String,
+    subtitle: String,
+    ctaLabel: String,
+    targetSection: String,
+    themeStyle: String,
+    imageKey: String,
+    active: Boolean,
+    priority: Long,
+    scheduleNote: String,
+    onDone: () -> Unit = {},
+  ) {
+    viewModelScope.launch {
+      _isBusy.value = true
+      repository.saveBanner(
+        existingId = existingId,
+        title = title,
+        subtitle = subtitle,
+        ctaLabel = ctaLabel,
+        targetSection = targetSection,
+        themeStyle = themeStyle,
+        imageKey = imageKey,
+        active = active,
+        priority = priority,
+        scheduleNote = scheduleNote,
+      ).onSuccess {
+        _toastEvents.tryEmit(if (existingId == null) "Promotional banner published" else "Promotional banner updated")
+        onDone()
+      }.onFailure {
+        _toastEvents.tryEmit(it.localizedMessage ?: "Failed to save banner")
+      }
+      _isBusy.value = false
+    }
+  }
+
+  fun toggleBannerActive(bannerId: String, active: Boolean) {
+    viewModelScope.launch {
+      repository.toggleBannerActive(bannerId, active)
+        .onSuccess { _toastEvents.tryEmit(if (active) "Banner set Active" else "Banner hidden") }
+        .onFailure { _toastEvents.tryEmit(it.localizedMessage ?: "Failed to update banner") }
+    }
+  }
+
+  fun deleteBanner(bannerId: String) {
+    viewModelScope.launch {
+      repository.deleteBanner(bannerId)
+        .onSuccess { _toastEvents.tryEmit("Banner deleted") }
+        .onFailure { _toastEvents.tryEmit(it.localizedMessage ?: "Failed to delete banner") }
+    }
   }
 
   fun buildAdminCsvReport(): String {

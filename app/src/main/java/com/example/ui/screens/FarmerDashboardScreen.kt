@@ -75,16 +75,28 @@ import com.example.domain.model.ProductCategory
 import com.example.domain.model.ProductUnit
 import com.example.domain.model.UiState
 import com.example.domain.model.UserProfile
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
+import com.example.ui.components.AnimatedHarvestFieldBanner
 import com.example.ui.components.EmptyStateCard
 import com.example.ui.components.MetricStatCard
+import com.example.ui.components.PromotionalBannerSlider
 import com.example.ui.components.SimpleBarChart
 import com.example.ui.components.StatusPill
 import com.example.ui.components.formatInr
+import com.example.ui.theme.DeepAmber
+import com.example.ui.theme.DeepForestGreen
+import com.example.ui.theme.DeepPine
 import com.example.ui.theme.EarthBrown
 import com.example.ui.theme.ForestGreen
 import com.example.ui.theme.FreshLeafGreen
 import com.example.ui.theme.GoldenHarvest
+import com.example.ui.theme.PaintedIvory
 import com.example.ui.theme.SoftGold
+import com.example.ui.theme.SoftSage
 import com.example.ui.theme.SoftTerracotta
 import com.example.ui.theme.TerracottaAlert
 import com.example.ui.viewmodel.VilaiguardViewModel
@@ -103,10 +115,12 @@ fun FarmerDashboardScreen(
   val productsState by viewModel.products.collectAsStateWithLifecycle()
   val ordersState by viewModel.orders.collectAsStateWithLifecycle()
   val farmersState by viewModel.farmers.collectAsStateWithLifecycle()
+  val bannersState by viewModel.banners.collectAsStateWithLifecycle()
 
   val products = (productsState as? UiState.Success)?.data.orEmpty()
   val orders = (ordersState as? UiState.Success)?.data.orEmpty()
   val farmers = (farmersState as? UiState.Success)?.data.orEmpty()
+  val banners = (bannersState as? UiState.Success)?.data.orEmpty()
   val primaryFarmer = farmers.firstOrNull()
 
   val pendingOrders = orders.filter { it.orderStatus == OrderStatus.ORDER_PLACED.name }
@@ -119,76 +133,142 @@ fun FarmerDashboardScreen(
       it.orderStatus != OrderStatus.CANCELLED.name && it.orderStatus != OrderStatus.DELIVERED.name
     }.sumOf { it.subtotal }
 
-  Scaffold(
-    floatingActionButton = {
-      if (selectedTab == 1) {
-        FloatingActionButton(
-          onClick = {
-            editingProduct = null
-            showProductEditor = true
-          },
-          containerColor = ForestGreen,
-          contentColor = MaterialTheme.colorScheme.onPrimary,
-          modifier = Modifier.testTag("add_product_fab"),
+  BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val useRail = maxWidth >= 720.dp
+    Row(modifier = Modifier.fillMaxSize()) {
+      if (useRail) {
+        NavigationRail(
+          containerColor = DeepForestGreen,
+          contentColor = PaintedIvory,
+          modifier = Modifier.fillMaxHeight(),
         ) {
-          Icon(Icons.Default.Add, contentDescription = "Add farm product")
+          val railColors =
+            NavigationRailItemDefaults.colors(
+              selectedIconColor = DeepPine,
+              selectedTextColor = SoftGold,
+              indicatorColor = GoldenHarvest,
+              unselectedIconColor = SoftSage,
+              unselectedTextColor = SoftSage,
+            )
+          NavigationRailItem(
+            selected = selectedTab == 0,
+            onClick = { selectedTab = 0 },
+            icon = { Icon(Icons.Default.Inventory2, contentDescription = "Overview") },
+            label = { Text("Overview") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 1,
+            onClick = { selectedTab = 1 },
+            icon = { Icon(Icons.Default.Edit, contentDescription = "Catalog") },
+            label = { Text("Products") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 2,
+            onClick = { selectedTab = 2 },
+            icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "Orders") },
+            label = { Text("Orders (${pendingOrders.size})") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 3,
+            onClick = { selectedTab = 3 },
+            icon = { Icon(Icons.Default.Analytics, contentDescription = "Earnings") },
+            label = { Text("Earnings") },
+            colors = railColors,
+          )
         }
       }
-    },
-    bottomBar = {
-      NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-        NavigationBarItem(
-          selected = selectedTab == 0,
-          onClick = { selectedTab = 0 },
-          icon = { Icon(Icons.Default.Inventory2, contentDescription = "Overview") },
-          label = { Text("Overview") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 1,
-          onClick = { selectedTab = 1 },
-          icon = { Icon(Icons.Default.Edit, contentDescription = "Catalog") },
-          label = { Text("Products") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 2,
-          onClick = { selectedTab = 2 },
-          icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "Orders") },
-          label = { Text("Orders (${pendingOrders.size})") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 3,
-          onClick = { selectedTab = 3 },
-          icon = { Icon(Icons.Default.Analytics, contentDescription = "Earnings") },
-          label = { Text("Earnings") },
-        )
-      }
-    },
-  ) { innerPadding ->
-    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-      when (selectedTab) {
-        0 -> {
-          LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-          ) {
-            item {
-              Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+
+      Scaffold(
+        modifier = Modifier.weight(1f),
+        floatingActionButton = {
+          if (selectedTab == 1) {
+            FloatingActionButton(
+              onClick = {
+                editingProduct = null
+                showProductEditor = true
+              },
+              containerColor = ForestGreen,
+              contentColor = MaterialTheme.colorScheme.onPrimary,
+              modifier = Modifier.testTag("add_product_fab"),
+            ) {
+              Icon(Icons.Default.Add, contentDescription = "Add farm product")
+            }
+          }
+        },
+        bottomBar = {
+          if (!useRail) {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+              NavigationBarItem(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 },
+                icon = { Icon(Icons.Default.Inventory2, contentDescription = "Overview") },
+                label = { Text("Overview") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 1,
+                onClick = { selectedTab = 1 },
+                icon = { Icon(Icons.Default.Edit, contentDescription = "Catalog") },
+                label = { Text("Products") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 2,
+                onClick = { selectedTab = 2 },
+                icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "Orders") },
+                label = { Text("Orders (${pendingOrders.size})") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 3,
+                onClick = { selectedTab = 3 },
+                icon = { Icon(Icons.Default.Analytics, contentDescription = "Earnings") },
+                label = { Text("Earnings") },
+              )
+            }
+          }
+        },
+      ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+          when (selectedTab) {
+            0 -> {
+              LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
               ) {
-                Column(modifier = Modifier.weight(1f)) {
-                  Text("Farmer Command Center", style = MaterialTheme.typography.headlineLarge, color = ForestGreen)
-                  Text(
-                    "${primaryFarmer?.farmName ?: profile?.farmName ?: "Partner Farm"} • ${primaryFarmer?.verificationStatus ?: "PENDING"}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = EarthBrown,
+                item {
+                  Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                  ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                      Text("Farmer Command Center", style = MaterialTheme.typography.headlineLarge, color = ForestGreen)
+                      Text(
+                        "${primaryFarmer?.farmName ?: profile?.farmName ?: "Partner Farm"} • ${primaryFarmer?.verificationStatus ?: "PENDING"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = EarthBrown,
+                      )
+                    }
+                    OutlinedButton(onClick = onEditRoleProfile) { Text("Farm Profile") }
+                  }
+                }
+                item {
+                  AnimatedHarvestFieldBanner(
+                    farmName = primaryFarmer?.farmName ?: profile?.farmName ?: "Partner Farm",
+                    activeProductsCount = products.size,
+                    pendingOrdersCount = pendingOrders.size,
                   )
                 }
-                OutlinedButton(onClick = onEditRoleProfile) { Text("Farm Profile") }
-              }
-            }
+                item {
+                  PromotionalBannerSlider(
+                    banners = banners,
+                    onBannerClick = { banner ->
+                      selectedTab = if (banner.targetSection == "ORDERS") 2 else 1
+                    },
+                  )
+                }
             item {
               Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 MetricStatCard("Total Sales", formatInr(totalSales), "${orders.size} total orders", Icons.Default.MonetizationOn, ForestGreen, Modifier.weight(1f))
@@ -350,6 +430,8 @@ fun FarmerDashboardScreen(
           }
         }
       }
+        }
+      }
     }
   }
 
@@ -418,7 +500,7 @@ private fun FarmerOrderCard(
         Text("Fulfillment Dest: ${order.deliveryCity}, ${order.deliveryDistrict} (${order.deliveryPinCode})", style = MaterialTheme.typography.labelSmall, color = EarthBrown)
       }
       if (order.logisticsName.isNotBlank()) {
-        Text("Assigned Carrier: ${order.logisticsName} (${order.logisticsStatus})", style = MaterialTheme.typography.labelSmall, color = GoldenHarvest)
+        Text("Assigned Carrier: ${order.logisticsName} (${order.logisticsStatus})", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = DeepAmber)
       }
 
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
@@ -440,8 +522,12 @@ private fun FarmerOrderCard(
             }
           }
           OrderStatus.PREPARING -> {
-            Button(onClick = onReady, colors = ButtonDefaults.buttonColors(containerColor = GoldenHarvest), modifier = Modifier.fillMaxWidth().testTag("farmer_ready_${order.orderNumber}")) {
-              Text("Mark Ready for Pickup")
+            Button(
+              onClick = onReady,
+              colors = ButtonDefaults.buttonColors(containerColor = GoldenHarvest, contentColor = DeepPine),
+              modifier = Modifier.fillMaxWidth().testTag("farmer_ready_${order.orderNumber}"),
+            ) {
+              Text("Mark Ready for Pickup", fontWeight = FontWeight.Bold)
             }
           }
           else -> Unit

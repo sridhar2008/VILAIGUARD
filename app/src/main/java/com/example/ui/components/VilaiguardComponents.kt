@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -10,35 +12,49 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Agriculture
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,16 +76,30 @@ import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.domain.model.OrderStateMachine
 import com.example.domain.model.OrderStatus
+import com.example.domain.model.PromotionalBanner
 import com.example.domain.model.UserRole
+import com.example.ui.theme.BurntOrange
+import com.example.ui.theme.DarkEarthBrown
+import com.example.ui.theme.DeepAmber
+import com.example.ui.theme.DeepCharcoal
+import com.example.ui.theme.DeepForestGreen
+import com.example.ui.theme.DeepPine
 import com.example.ui.theme.EarthBrown
 import com.example.ui.theme.ForestGreen
 import com.example.ui.theme.FreshLeafGreen
 import com.example.ui.theme.GoldenHarvest
+import com.example.ui.theme.HarvestGold
+import com.example.ui.theme.MossGreen
+import com.example.ui.theme.OliveGreen
+import com.example.ui.theme.PaintedIvory
 import com.example.ui.theme.SoftGold
 import com.example.ui.theme.SoftMintTint
 import com.example.ui.theme.SoftTerracotta
+import com.example.ui.theme.Terracotta
 import com.example.ui.theme.TerracottaAlert
 import com.example.ui.theme.WarmCream
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -121,6 +152,8 @@ fun RoleSwitcherBar(
   unreadNotifications: Int,
   onSelectRole: (UserRole) -> Unit,
   onOpenNotifications: () -> Unit,
+  onShareApp: () -> Unit = {},
+  onRequestSignOut: () -> Unit = {},
 ) {
   Surface(
     color = MaterialTheme.colorScheme.surface,
@@ -133,25 +166,67 @@ fun RoleSwitcherBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
       ) {
-        VilaiguardBrandLogo(size = 36.dp, showText = true, lightText = false)
-        IconButton(
-          onClick = onOpenNotifications,
-          modifier = Modifier.testTag("notifications_button"),
+        VilaiguardBrandLogo(size = 34.dp, showText = true, lightText = false)
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-          BadgedBox(
-            badge = {
-              if (unreadNotifications > 0) {
-                Badge(containerColor = TerracottaAlert) {
-                  Text(unreadNotifications.toString(), color = Color.White)
-                }
-              }
-            }
+          IconButton(
+            onClick = onShareApp,
+            modifier = Modifier.size(42.dp).testTag("share_app_top_button"),
           ) {
             Icon(
-              imageVector = Icons.Default.Notifications,
-              contentDescription = "Notifications",
-              tint = ForestGreen,
+              imageVector = Icons.Default.Share,
+              contentDescription = "Share VILAIGUARD Link",
+              tint = DeepForestGreen,
             )
+          }
+          IconButton(
+            onClick = onOpenNotifications,
+            modifier = Modifier.size(42.dp).testTag("notifications_button"),
+          ) {
+            BadgedBox(
+              badge = {
+                if (unreadNotifications > 0) {
+                  Badge(containerColor = TerracottaAlert) {
+                    Text(unreadNotifications.toString(), color = Color.White, fontWeight = FontWeight.Bold)
+                  }
+                }
+              }
+            ) {
+              Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = "Notifications",
+                tint = DeepForestGreen,
+              )
+            }
+          }
+          Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = SoftTerracotta,
+            border = BorderStroke(1.dp, Terracotta.copy(alpha = 0.55f)),
+            modifier =
+              Modifier.testTag("topbar_logout_button")
+                .clickable(onClick = onRequestSignOut),
+          ) {
+            Row(
+              modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+              Icon(
+                imageVector = Icons.AutoMirrored.Filled.Logout,
+                contentDescription = "Logout",
+                tint = DarkEarthBrown,
+                modifier = Modifier.size(16.dp),
+              )
+              Text(
+                text = "Logout",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = DarkEarthBrown,
+              )
+            }
           }
         }
       }
@@ -171,7 +246,7 @@ fun RoleSwitcherBar(
             }
           Surface(
             shape = RoundedCornerShape(20.dp),
-            color = if (selected) ForestGreen else MaterialTheme.colorScheme.surfaceVariant,
+            color = if (selected) DeepForestGreen else MaterialTheme.colorScheme.surfaceVariant,
             border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             modifier =
               Modifier.testTag("role_chip_${role.name.lowercase()}")
@@ -185,16 +260,194 @@ fun RoleSwitcherBar(
               Icon(
                 imageVector = icon,
                 contentDescription = role.label,
-                tint = if (selected) Color.White else ForestGreen,
+                tint = if (selected) PaintedIvory else DeepForestGreen,
                 modifier = Modifier.size(16.dp),
               )
               Text(
                 text = role.label,
                 style = MaterialTheme.typography.labelMedium,
-                color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold,
+                color = if (selected) PaintedIvory else DeepCharcoal,
               )
             }
           }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+fun PromotionalBannerSlider(
+  banners: List<PromotionalBanner>,
+  onBannerClick: (PromotionalBanner) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val activeBanners =
+    banners.filter { it.active }.sortedBy { it.priority }.ifEmpty {
+      listOf(
+        PromotionalBanner(
+          id = "default_1",
+          title = "Fresh Harvest, Direct From Farmers",
+          subtitle = "Morning-picked farm crops delivered with full price transparency.",
+          ctaLabel = "Explore Market",
+          targetSection = "MARKET",
+          themeStyle = "FOREST",
+          scheduleNote = "Daily Harvest",
+        ),
+        PromotionalBanner(
+          id = "default_2",
+          title = "Support Local Farmers. Eat Fresh.",
+          subtitle = "95% of your basket goes directly to verified rural agricultural custodians.",
+          ctaLabel = "Browse Organic",
+          targetSection = "ORGANIC",
+          themeStyle = "OLIVE",
+          scheduleNote = "Verified Growers",
+        ),
+      )
+    }
+
+  val pagerState = rememberPagerState(pageCount = { activeBanners.size })
+  val scope = rememberCoroutineScope()
+
+  // Smooth auto-sliding; pauses whenever the user actively drags
+  LaunchedEffect(activeBanners.size, pagerState.isScrollInProgress) {
+    if (activeBanners.size > 1 && !pagerState.isScrollInProgress) {
+      delay(4500L)
+      val next = (pagerState.currentPage + 1) % activeBanners.size
+      pagerState.animateScrollToPage(next)
+    }
+  }
+
+  Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    HorizontalPager(
+      state = pagerState,
+      modifier = Modifier.fillMaxWidth(),
+      contentPadding = PaddingValues(horizontal = 0.dp),
+      pageSpacing = 12.dp,
+    ) { page ->
+      val banner = activeBanners[page]
+      val bgColors =
+        when (banner.themeStyle) {
+          "HARVEST" -> listOf(Color(0xFF4A3514), DarkEarthBrown, HarvestGold.copy(alpha = 0.85f))
+          "TERRACOTTA" -> listOf(Color(0xFF5A271B), Terracotta, BurntOrange)
+          "OLIVE" -> listOf(DeepForestGreen, MossGreen, OliveGreen)
+          else -> listOf(DeepPine, DeepForestGreen, MossGreen)
+        }
+
+      Card(
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, HarvestGold.copy(alpha = 0.6f)),
+        colors = CardDefaults.cardColors(containerColor = bgColors.first()),
+        modifier =
+          Modifier.fillMaxWidth()
+            .clickable { onBannerClick(banner) }
+            .testTag("promo_banner_card_${banner.id}"),
+      ) {
+        Box(
+          modifier =
+            Modifier.fillMaxWidth()
+              .background(Brush.linearGradient(bgColors))
+              .padding(16.dp),
+        ) {
+          Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              Surface(shape = RoundedCornerShape(10.dp), color = HarvestGold) {
+                Text(
+                  text = banner.scheduleNote.ifBlank { "Featured Offer" },
+                  style = MaterialTheme.typography.labelSmall,
+                  fontWeight = FontWeight.Bold,
+                  color = DeepPine,
+                  modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                )
+              }
+              Text(
+                text = "${page + 1} / ${activeBanners.size}",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = SoftGold,
+              )
+            }
+            Text(
+              text = banner.title,
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.Bold,
+              color = PaintedIvory,
+              maxLines = 2,
+              overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+              text = banner.subtitle,
+              style = MaterialTheme.typography.bodyMedium,
+              color = PaintedIvory.copy(alpha = 0.92f),
+              maxLines = 2,
+              overflow = TextOverflow.Ellipsis,
+            )
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              Button(
+                onClick = { onBannerClick(banner) },
+                colors = ButtonDefaults.buttonColors(containerColor = HarvestGold, contentColor = DeepPine),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                shape = RoundedCornerShape(12.dp),
+              ) {
+                Text(banner.ctaLabel.ifBlank { "Explore" }, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(4.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+              }
+
+              if (activeBanners.size > 1) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                  IconButton(
+                    onClick = {
+                      val prev = if (pagerState.currentPage == 0) activeBanners.lastIndex else pagerState.currentPage - 1
+                      scope.launch { pagerState.animateScrollToPage(prev) }
+                    },
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(PaintedIvory.copy(alpha = 0.18f)),
+                  ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Previous Banner", tint = PaintedIvory, modifier = Modifier.size(16.dp))
+                  }
+                  IconButton(
+                    onClick = {
+                      val next = (pagerState.currentPage + 1) % activeBanners.size
+                      scope.launch { pagerState.animateScrollToPage(next) }
+                    },
+                    modifier = Modifier.size(36.dp).clip(CircleShape).background(PaintedIvory.copy(alpha = 0.18f)),
+                  ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next Banner", tint = PaintedIvory, modifier = Modifier.size(16.dp))
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (activeBanners.size > 1) {
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        activeBanners.forEachIndexed { idx, _ ->
+          val active = idx == pagerState.currentPage
+          Box(
+            modifier =
+              Modifier.padding(horizontal = 3.dp)
+                .height(6.dp)
+                .width(if (active) 20.dp else 6.dp)
+                .clip(CircleShape)
+                .background(if (active) DeepForestGreen else MossGreen.copy(alpha = 0.35f))
+                .clickable { scope.launch { pagerState.animateScrollToPage(idx) } },
+          )
         }
       }
     }
@@ -210,6 +463,7 @@ fun MetricStatCard(
   accentColor: Color = FreshLeafGreen,
   modifier: Modifier = Modifier,
 ) {
+  val readableAccent = if (accentColor == GoldenHarvest || accentColor == HarvestGold) DeepAmber else accentColor
   Card(
     modifier = modifier,
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -226,6 +480,7 @@ fun MetricStatCard(
           text = title,
           style = MaterialTheme.typography.labelMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
+          fontWeight = FontWeight.SemiBold,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
         )
@@ -233,10 +488,10 @@ fun MetricStatCard(
           modifier =
             Modifier.size(30.dp)
               .clip(CircleShape)
-              .background(accentColor.copy(alpha = 0.14f)),
+              .background(accentColor.copy(alpha = 0.16f)),
           contentAlignment = Alignment.Center,
         ) {
-          Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(16.dp))
+          Icon(icon, contentDescription = null, tint = readableAccent, modifier = Modifier.size(16.dp))
         }
       }
       Spacer(Modifier.height(8.dp))
@@ -250,7 +505,8 @@ fun MetricStatCard(
       Text(
         text = subtitle,
         style = MaterialTheme.typography.labelSmall,
-        color = accentColor,
+        fontWeight = FontWeight.SemiBold,
+        color = readableAccent,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
       )
@@ -260,16 +516,20 @@ fun MetricStatCard(
 
 @Composable
 fun StatusPill(text: String, tone: Color = FreshLeafGreen) {
+  val isGold = tone == GoldenHarvest || tone == HarvestGold || tone == SoftGold
+  val bgColor = if (isGold) HarvestGold.copy(alpha = 0.24f) else tone.copy(alpha = 0.15f)
+  val borderColor = if (isGold) DeepAmber.copy(alpha = 0.45f) else tone.copy(alpha = 0.48f)
+  val textColor = if (isGold) DeepAmber else tone
   Surface(
     shape = RoundedCornerShape(12.dp),
-    color = tone.copy(alpha = 0.14f),
-    border = BorderStroke(0.8.dp, tone.copy(alpha = 0.45f)),
+    color = bgColor,
+    border = BorderStroke(0.9.dp, borderColor),
   ) {
     Text(
       text = text,
       style = MaterialTheme.typography.labelSmall,
-      fontWeight = FontWeight.SemiBold,
-      color = tone,
+      fontWeight = FontWeight.Bold,
+      color = textColor,
       modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
     )
   }
@@ -319,7 +579,7 @@ fun ProductArtworkBanner(
           ) {
             Icon(Icons.Default.Eco, contentDescription = null, tint = ForestGreen, modifier = Modifier.size(12.dp))
             Spacer(Modifier.width(3.dp))
-            Text("Organic", style = MaterialTheme.typography.labelSmall, color = ForestGreen)
+            Text("Organic", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = ForestGreen)
           }
         }
       }
@@ -327,7 +587,7 @@ fun ProductArtworkBanner(
     Icon(
       imageVector = Icons.Default.Eco,
       contentDescription = null,
-      tint = Color.White.copy(alpha = 0.25f),
+      tint = Color.White.copy(alpha = 0.28f),
       modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).size(28.dp),
     )
   }
@@ -375,7 +635,7 @@ fun OrderTimelineStepper(currentStatusRaw: String) {
             Icon(
               Icons.Default.CheckCircle,
               contentDescription = null,
-              tint = Color.White,
+              tint = if (active) DeepPine else Color.White,
               modifier = Modifier.size(14.dp),
             )
           }
@@ -384,7 +644,7 @@ fun OrderTimelineStepper(currentStatusRaw: String) {
         Text(
           text = step.label,
           style = MaterialTheme.typography.bodyMedium,
-          fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
+          fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
           color =
             when {
               active -> ForestGreen
@@ -410,7 +670,7 @@ fun SimpleBarChart(
     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
   ) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-      Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+      Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
       Text(subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
       Spacer(Modifier.height(14.dp))
       Canvas(modifier = Modifier.fillMaxWidth().height(130.dp)) {
@@ -436,6 +696,7 @@ fun SimpleBarChart(
           Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
           )
@@ -451,9 +712,11 @@ fun DemoRouteMapCard(
   dropLabel: String,
   progressFraction: Float,
 ) {
+  val context = LocalContext.current
+
   Card(
-    colors = CardDefaults.cardColors(containerColor = SoftMintTint.copy(alpha = 0.55f)),
-    border = BorderStroke(1.dp, FreshLeafGreen.copy(alpha = 0.4f)),
+    colors = CardDefaults.cardColors(containerColor = SoftMintTint.copy(alpha = 0.65f)),
+    border = BorderStroke(1.dp, FreshLeafGreen.copy(alpha = 0.45f)),
   ) {
     Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
       Row(
@@ -461,14 +724,28 @@ fun DemoRouteMapCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        Text("Demo Route Preview", style = MaterialTheme.typography.titleMedium, color = ForestGreen)
-        StatusPill("Simulated GPS", GoldenHarvest)
+        Text(
+          "Farm-to-Customer Route",
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Bold,
+          color = ForestGreen,
+        )
+        StatusPill(
+          text = "Route Ready",
+          tone = FreshLeafGreen,
+        )
       }
+      Spacer(Modifier.height(4.dp))
+      Text(
+        "Interactive route progress preview. Tap below for turn-by-turn Google Maps directions (no API key needed).",
+        style = MaterialTheme.typography.labelSmall,
+        color = DarkEarthBrown,
+      )
       Spacer(Modifier.height(10.dp))
-      Canvas(modifier = Modifier.fillMaxWidth().height(90.dp)) {
-        val start = Offset(36f, size.height * 0.65f)
-        val mid = Offset(size.width * 0.5f, size.height * 0.22f)
-        val end = Offset(size.width - 36f, size.height * 0.62f)
+      Canvas(modifier = Modifier.fillMaxWidth().height(92.dp)) {
+        val start = Offset(36f, size.height * 0.68f)
+        val mid = Offset(size.width * 0.5f, size.height * 0.20f)
+        val end = Offset(size.width - 36f, size.height * 0.64f)
         val path =
           androidx.compose.ui.graphics.Path().apply {
             moveTo(start.x, start.y)
@@ -476,27 +753,59 @@ fun DemoRouteMapCard(
           }
         drawPath(
           path = path,
-          color = ForestGreen.copy(alpha = 0.35f),
+          color = ForestGreen.copy(alpha = 0.28f),
           style =
             androidx.compose.ui.graphics.drawscope.Stroke(
               width = 6f,
               pathEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f)),
             ),
         )
-        // Farm pin
-        drawCircle(color = EarthBrown, radius = 14f, center = start)
-        // Customer pin
-        drawCircle(color = ForestGreen, radius = 14f, center = end)
-        // Courier indicator along curve
         val t = progressFraction.coerceIn(0f, 1f)
+        if (t > 0f) {
+          val steps = 20
+          val completedPath =
+            androidx.compose.ui.graphics.Path().apply {
+              moveTo(start.x, start.y)
+              for (i in 1..steps) {
+                val u = t * (i / steps.toFloat())
+                val px = (1 - u) * (1 - u) * start.x + 2 * (1 - u) * u * mid.x + u * u * end.x
+                val py = (1 - u) * (1 - u) * start.y + 2 * (1 - u) * u * mid.y + u * u * end.y
+                lineTo(px, py)
+              }
+            }
+          drawPath(
+            path = completedPath,
+            color = FreshLeafGreen,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 7f),
+          )
+        }
+        drawCircle(color = EarthBrown, radius = 14f, center = start)
+        drawCircle(color = ForestGreen, radius = 14f, center = end)
         val cx = (1 - t) * (1 - t) * start.x + 2 * (1 - t) * t * mid.x + t * t * end.x
         val cy = (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * mid.y + t * t * end.y
-        drawCircle(color = GoldenHarvest, radius = 16f, center = Offset(cx, cy))
+        drawCircle(color = PaintedIvory, radius = 20f, center = Offset(cx, cy))
+        drawCircle(color = GoldenHarvest, radius = 14f, center = Offset(cx, cy))
       }
       Spacer(Modifier.height(6.dp))
       Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text("Farm: $pickupLabel", style = MaterialTheme.typography.labelSmall, color = EarthBrown)
-        Text("Drop: $dropLabel", style = MaterialTheme.typography.labelSmall, color = ForestGreen)
+        Text("Farm: $pickupLabel", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = EarthBrown)
+        Text("Drop: $dropLabel", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = ForestGreen)
+      }
+      Spacer(Modifier.height(10.dp))
+      OutlinedButton(
+        onClick = {
+          val origin = Uri.encode(pickupLabel)
+          val dest = Uri.encode(dropLabel)
+          val url = "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$dest"
+          val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+          runCatching { context.startActivity(intent) }
+        },
+        border = BorderStroke(1.dp, DeepForestGreen),
+        modifier = Modifier.fillMaxWidth().testTag("open_maps_directions_button"),
+      ) {
+        Icon(Icons.Default.Directions, contentDescription = "Open Google Maps", tint = DeepForestGreen, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text("Open Google Maps Directions", color = DeepForestGreen, fontWeight = FontWeight.Bold)
       }
     }
   }

@@ -399,3 +399,22 @@ data class ProductReview(
   val comment: String = "",
   @ServerTimestamp val createdAt: Timestamp? = null,
 )
+
+@Keep
+@IgnoreExtraProperties
+data class PromotionalBanner(
+  @DocumentId val id: String = "",
+  val workspaceOwnerId: String = "",
+  val title: String = "",
+  val subtitle: String = "",
+  val ctaLabel: String = "Explore",
+  val targetSection: String = "MARKET",
+  val themeStyle: String = "FOREST",
+  val imageKey: String = "farmland",
+  val active: Boolean = true,
+  val priority: Long = 1L,
+  val scheduleNote: String = "All Season",
+  @ServerTimestamp val createdAt: Timestamp? = null,
+  @ServerTimestamp val updatedAt: Timestamp? = null,
+)
+

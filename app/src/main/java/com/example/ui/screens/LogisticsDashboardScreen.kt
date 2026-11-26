@@ -62,16 +62,26 @@ import com.example.domain.model.Order
 import com.example.domain.model.OrderStateMachine
 import com.example.domain.model.OrderStatus
 import com.example.domain.model.UiState
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
+import com.example.ui.components.AnimatedDeliveryTruckBanner
 import com.example.ui.components.DemoRouteMapCard
 import com.example.ui.components.EmptyStateCard
 import com.example.ui.components.MetricStatCard
 import com.example.ui.components.StatusPill
 import com.example.ui.components.formatInr
+import com.example.ui.theme.DeepForestGreen
+import com.example.ui.theme.DeepPine
 import com.example.ui.theme.EarthBrown
 import com.example.ui.theme.ForestGreen
 import com.example.ui.theme.FreshLeafGreen
 import com.example.ui.theme.GoldenHarvest
+import com.example.ui.theme.PaintedIvory
 import com.example.ui.theme.SoftGold
+import com.example.ui.theme.SoftSage
 import com.example.ui.viewmodel.VilaiguardViewModel
 
 @Composable
@@ -98,55 +108,105 @@ fun LogisticsDashboardScreen(
     }
   val completedTasks = orders.filter { it.orderStatus == OrderStatus.DELIVERED.name }
 
-  Scaffold(
-    bottomBar = {
-      NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-        NavigationBarItem(
-          selected = selectedTab == 0,
-          onClick = { selectedTab = 0 },
-          icon = { Icon(Icons.Default.TaskAlt, contentDescription = "Tasks") },
-          label = { Text("Tasks (${activeTasks.size})") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 1,
-          onClick = { selectedTab = 1 },
-          icon = { Icon(Icons.Default.Map, contentDescription = "Route Map") },
-          label = { Text("Route Map") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 2,
-          onClick = { selectedTab = 2 },
-          icon = { Icon(Icons.Default.History, contentDescription = "History") },
-          label = { Text("History") },
-        )
+  BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val useRail = maxWidth >= 720.dp
+    Row(modifier = Modifier.fillMaxSize()) {
+      if (useRail) {
+        NavigationRail(
+          containerColor = DeepForestGreen,
+          contentColor = PaintedIvory,
+          modifier = Modifier.fillMaxHeight(),
+        ) {
+          val railColors =
+            NavigationRailItemDefaults.colors(
+              selectedIconColor = DeepPine,
+              selectedTextColor = SoftGold,
+              indicatorColor = GoldenHarvest,
+              unselectedIconColor = SoftSage,
+              unselectedTextColor = SoftSage,
+            )
+          NavigationRailItem(
+            selected = selectedTab == 0,
+            onClick = { selectedTab = 0 },
+            icon = { Icon(Icons.Default.TaskAlt, contentDescription = "Tasks") },
+            label = { Text("Tasks (${activeTasks.size})") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 1,
+            onClick = { selectedTab = 1 },
+            icon = { Icon(Icons.Default.Map, contentDescription = "Route Map") },
+            label = { Text("Route Map") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 2,
+            onClick = { selectedTab = 2 },
+            icon = { Icon(Icons.Default.History, contentDescription = "History") },
+            label = { Text("History") },
+            colors = railColors,
+          )
+        }
       }
-    }
-  ) { innerPadding ->
-    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-      when (selectedTab) {
-        0 -> {
-          LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-          ) {
-            item {
-              Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+
+      Scaffold(
+        modifier = Modifier.weight(1f),
+        bottomBar = {
+          if (!useRail) {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+              NavigationBarItem(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 },
+                icon = { Icon(Icons.Default.TaskAlt, contentDescription = "Tasks") },
+                label = { Text("Tasks (${activeTasks.size})") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 1,
+                onClick = { selectedTab = 1 },
+                icon = { Icon(Icons.Default.Map, contentDescription = "Route Map") },
+                label = { Text("Route Map") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 2,
+                onClick = { selectedTab = 2 },
+                icon = { Icon(Icons.Default.History, contentDescription = "History") },
+                label = { Text("History") },
+              )
+            }
+          }
+        }
+      ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+          when (selectedTab) {
+            0 -> {
+              LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
               ) {
-                Column(modifier = Modifier.weight(1f)) {
-                  Text("Delivery Partner Hub", style = MaterialTheme.typography.headlineLarge, color = ForestGreen)
-                  Text(
-                    "${primaryPartner?.fullName ?: "Carrier"} • ${primaryPartner?.vehicleNumber ?: ""}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = EarthBrown,
+                item {
+                  Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                  ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                      Text("Delivery Partner Hub", style = MaterialTheme.typography.headlineLarge, color = ForestGreen)
+                      Text(
+                        "${primaryPartner?.fullName ?: "Carrier"} • ${primaryPartner?.vehicleNumber ?: ""}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = EarthBrown,
+                      )
+                    }
+                    OutlinedButton(onClick = onEditRoleProfile) { Text("Fleet Profile") }
+                  }
+                }
+                item {
+                  AnimatedDeliveryTruckBanner(
+                    activeRuns = activeTasks.size,
+                    completedRuns = completedTasks.size,
                   )
                 }
-                OutlinedButton(onClick = onEditRoleProfile) { Text("Fleet Profile") }
-              }
-            }
             if (primaryPartner != null) {
               item {
                 Card(
@@ -311,6 +371,8 @@ fun LogisticsDashboardScreen(
               }
             }
           }
+        }
+      }
         }
       }
     }

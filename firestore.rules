@@ -279,6 +279,21 @@ service cloud.firestore {
              isTimestampBound(data.createdAt);
     }
 
+    function isValidBanner(data) {
+      return data.workspaceOwnerId is string && data.workspaceOwnerId.size() >= 1 && data.workspaceOwnerId.size() <= 128 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 100 &&
+             data.subtitle is string && data.subtitle.size() >= 1 && data.subtitle.size() <= 240 &&
+             data.ctaLabel is string && data.ctaLabel.size() >= 1 && data.ctaLabel.size() <= 40 &&
+             data.targetSection in ['MARKET', 'ORGANIC', 'BULK', 'FARMERS', 'ORDERS'] &&
+             data.themeStyle in ['FOREST', 'HARVEST', 'TERRACOTTA', 'OLIVE'] &&
+             (!('imageKey' in data) || (data.imageKey is string && data.imageKey.size() <= 60)) &&
+             data.active is bool &&
+             data.priority is int && data.priority >= 0 && data.priority <= 1000 &&
+             (!('scheduleNote' in data) || (data.scheduleNote is string && data.scheduleNote.size() <= 80)) &&
+             isTimestampBound(data.createdAt) &&
+             isTimestampBound(data.updatedAt);
+    }
+
     // --- COLLECTIONS ---
 
     match /admins/{adminUid} {
@@ -537,6 +552,23 @@ service cloud.firestore {
                        isValidReview(incoming()) &&
                        (isAdmin() || (incoming().workspaceOwnerId == request.auth.uid && incoming().userId == request.auth.uid));
       allow update, delete: if isSignedIn() && isValidId(reviewId) && (isAdmin() || existing().userId == request.auth.uid);
+    }
+
+    match /banners/{bannerId} {
+      allow get: if isSignedIn() && isValidId(bannerId) && (existing().workspaceOwnerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().workspaceOwnerId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(bannerId) &&
+                       incoming().keys().hasAll(['workspaceOwnerId', 'title', 'subtitle', 'ctaLabel', 'targetSection', 'themeStyle', 'active', 'priority', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['workspaceOwnerId', 'title', 'subtitle', 'ctaLabel', 'targetSection', 'themeStyle', 'imageKey', 'active', 'priority', 'scheduleNote', 'createdAt', 'updatedAt']) &&
+                       isValidBanner(incoming()) &&
+                       (isAdmin() || incoming().workspaceOwnerId == request.auth.uid);
+      allow update: if isSignedIn() && isValidId(bannerId) &&
+                       isValidBanner(incoming()) &&
+                       incoming().workspaceOwnerId == existing().workspaceOwnerId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (isAdmin() || existing().workspaceOwnerId == request.auth.uid) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'subtitle', 'ctaLabel', 'targetSection', 'themeStyle', 'imageKey', 'active', 'priority', 'scheduleNote', 'updatedAt']);
+      allow delete: if isSignedIn() && isValidId(bannerId) && (isAdmin() || existing().workspaceOwnerId == request.auth.uid);
     }
   }
 }

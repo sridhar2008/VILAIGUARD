@@ -286,3 +286,57 @@ test("Email spoofing test: unverified admin email is rejected", async () => {
 
   await assertSucceeds(realAdminDb.collection("users").doc(ALICE_UID).get());
 });
+
+test("Promotional Banners: owner create, update visibility, filtered query & cross-user denial", async () => {
+  const aliceDb = testEnv.authenticatedContext(ALICE_UID).firestore();
+  const bobDb = testEnv.authenticatedContext(BOB_UID).firestore();
+  const now = pastTime();
+
+  await assertSucceeds(
+    aliceDb.collection("banners").doc("banner_1").set({
+      workspaceOwnerId: ALICE_UID,
+      title: "Fresh Harvest, Direct From Farmers",
+      subtitle: "Morning-picked Nashik vegetables with transparent farm pricing.",
+      ctaLabel: "Shop Harvest",
+      targetSection: "MARKET",
+      themeStyle: "FOREST",
+      imageKey: "farmland",
+      active: true,
+      priority: 1,
+      scheduleNote: "All Season",
+      createdAt: now,
+      updatedAt: now,
+    })
+  );
+
+  // Invalid themeStyle or targetSection fails validation
+  await assertFails(
+    aliceDb.collection("banners").doc("banner_bad").set({
+      workspaceOwnerId: ALICE_UID,
+      title: "Bad Banner",
+      subtitle: "Invalid style",
+      ctaLabel: "Go",
+      targetSection: "UNKNOWN",
+      themeStyle: "FOREST",
+      active: true,
+      priority: 1,
+      createdAt: now,
+      updatedAt: now,
+    })
+  );
+
+  // Alice toggles banner active flag
+  await assertSucceeds(
+    aliceDb.collection("banners").doc("banner_1").update({
+      active: false,
+      updatedAt: pastTime(1000),
+    })
+  );
+
+  // Filtered query succeeds, unfiltered query and Bob read fail
+  await assertSucceeds(
+    aliceDb.collection("banners").where("workspaceOwnerId", "==", ALICE_UID).get()
+  );
+  await assertFails(aliceDb.collection("banners").get());
+  await assertFails(bobDb.collection("banners").doc("banner_1").get());
+});

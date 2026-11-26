@@ -299,6 +299,26 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["workspaceOwnerId", "productId", "userId", "userName", "rating", "comment", "createdAt"]
+    },
+    "PromotionalBanner": {
+      "title": "PromotionalBanner",
+      "description": "Dynamic seasonal promotion and advertisement banner managed by Admin",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "ctaLabel": { "type": "string" },
+        "targetSection": { "type": "string", "enum": ["MARKET", "ORGANIC", "BULK", "FARMERS", "ORDERS"] },
+        "themeStyle": { "type": "string", "enum": ["FOREST", "HARVEST", "TERRACOTTA", "OLIVE"] },
+        "imageKey": { "type": "string" },
+        "active": { "type": "boolean" },
+        "priority": { "type": "integer" },
+        "scheduleNote": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "title", "subtitle", "ctaLabel", "targetSection", "themeStyle", "active", "priority", "createdAt", "updatedAt"]
     }
   },
   "firestore": {
@@ -353,6 +373,10 @@
     "/reviews/{reviewId}": {
       "schema": { "$ref": "#/entities/ProductReview" },
       "description": "Customer product reviews"
+    },
+    "/banners/{bannerId}": {
+      "schema": { "$ref": "#/entities/PromotionalBanner" },
+      "description": "Moving promotional advertisement banners managed by Admin"
     }
   }
 }

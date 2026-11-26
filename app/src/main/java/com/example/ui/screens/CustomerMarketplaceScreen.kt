@@ -22,8 +22,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -31,9 +33,9 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
@@ -64,6 +66,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -73,6 +76,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -88,18 +92,33 @@ import com.example.domain.model.ProductCategory
 import com.example.domain.model.SavedAddress
 import com.example.domain.model.UiState
 import com.example.domain.model.UserProfile
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
+import com.example.ui.components.AnimatedProduceShowcaseCard
 import com.example.ui.components.DemoRouteMapCard
 import com.example.ui.components.EmptyStateCard
 import com.example.ui.components.OrderTimelineStepper
 import com.example.ui.components.ProductArtworkBanner
+import com.example.ui.components.PromotionalBannerSlider
+import com.example.ui.components.ShareLinkHelper
 import com.example.ui.components.StatusPill
+import com.example.ui.components.VilaiguardDeepLink
 import com.example.ui.components.formatInr
+import com.example.ui.theme.DeepAmber
+import com.example.ui.theme.DeepForestGreen
+import com.example.ui.theme.DeepPine
 import com.example.ui.theme.EarthBrown
 import com.example.ui.theme.ForestGreen
 import com.example.ui.theme.FreshLeafGreen
 import com.example.ui.theme.GoldenHarvest
+import com.example.ui.theme.PaintedIvory
 import com.example.ui.theme.SoftGold
 import com.example.ui.theme.SoftMintTint
+import com.example.ui.theme.SoftSage
 import com.example.ui.theme.TerracottaAlert
 import com.example.ui.viewmodel.VilaiguardViewModel
 
@@ -108,15 +127,19 @@ import com.example.ui.viewmodel.VilaiguardViewModel
 fun CustomerMarketplaceScreen(
   viewModel: VilaiguardViewModel,
   profile: UserProfile?,
+  pendingDeepLink: VilaiguardDeepLink? = null,
+  onConsumeDeepLink: () -> Unit = {},
   onEditRoleProfile: () -> Unit,
   onSignOut: () -> Unit,
 ) {
+  val context = LocalContext.current
   var selectedTab by remember { mutableIntStateOf(0) }
   var selectedProduct by remember { mutableStateOf<Product?>(null) }
   var selectedOrder by remember { mutableStateOf<Order?>(null) }
   var showAddAddressDialog by remember { mutableStateOf(false) }
   var showSupportDialog by remember { mutableStateOf(false) }
 
+  val productsState by viewModel.products.collectAsStateWithLifecycle()
   val filteredProductsState by viewModel.filteredProducts.collectAsStateWithLifecycle()
   val filters by viewModel.filters.collectAsStateWithLifecycle()
   val cartState by viewModel.cartItems.collectAsStateWithLifecycle()
@@ -125,72 +148,181 @@ fun CustomerMarketplaceScreen(
   val wishlistState by viewModel.wishlist.collectAsStateWithLifecycle()
   val reviewsState by viewModel.reviews.collectAsStateWithLifecycle()
   val ticketsState by viewModel.supportTickets.collectAsStateWithLifecycle()
+  val bannersState by viewModel.banners.collectAsStateWithLifecycle()
   val isBusy by viewModel.isBusy.collectAsStateWithLifecycle()
 
   val cartItems = (cartState as? UiState.Success)?.data.orEmpty()
   val wishlistIds = (wishlistState as? UiState.Success)?.data.orEmpty().map { it.productId }.toSet()
   val addresses = (addressesState as? UiState.Success)?.data.orEmpty()
   val allOrders = (ordersState as? UiState.Success)?.data.orEmpty()
+  val allProducts = (productsState as? UiState.Success)?.data.orEmpty()
+  val banners = (bannersState as? UiState.Success)?.data.orEmpty()
 
-  Scaffold(
-    bottomBar = {
-      NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-        NavigationBarItem(
-          selected = selectedTab == 0,
-          onClick = { selectedTab = 0 },
-          icon = { Icon(Icons.Default.Home, contentDescription = "Market") },
-          label = { Text("Market") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 1,
-          onClick = { selectedTab = 1 },
-          icon = {
-            BadgedBox(
-              badge = {
-                if (cartItems.isNotEmpty()) {
-                  Badge(containerColor = ForestGreen) { Text(cartItems.size.toString()) }
-                }
-              }
-            ) {
-              Icon(Icons.Default.ShoppingCart, contentDescription = "Cart")
-            }
-          },
-          label = { Text("Cart") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 2,
-          onClick = { selectedTab = 2 },
-          icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "Orders") },
-          label = { Text("Orders") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 3,
-          onClick = { selectedTab = 3 },
-          icon = { Icon(Icons.Default.Person, contentDescription = "Account") },
-          label = { Text("Account") },
-        )
+  LaunchedEffect(pendingDeepLink, allProducts, allOrders) {
+    when (pendingDeepLink) {
+      is VilaiguardDeepLink.OpenProduct -> {
+        val target = allProducts.firstOrNull { it.id == pendingDeepLink.productId }
+        if (target != null) {
+          selectedTab = 0
+          selectedProduct = target
+          onConsumeDeepLink()
+        }
       }
+      is VilaiguardDeepLink.OpenOrder -> {
+        val target =
+          allOrders.firstOrNull {
+            it.orderNumber.equals(pendingDeepLink.orderNumberOrId, ignoreCase = true) ||
+              it.id == pendingDeepLink.orderNumberOrId
+          }
+        if (target != null) {
+          selectedTab = 2
+          selectedOrder = target
+          onConsumeDeepLink()
+        }
+      }
+      else -> Unit
     }
-  ) { innerPadding ->
-    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-      when (selectedTab) {
-        0 -> {
-          LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-          ) {
-            item {
-              OutlinedTextField(
-                value = filters.searchQuery,
-                onValueChange = viewModel::updateSearch,
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                placeholder = { Text("Search crops, farmers, or districts...") },
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().testTag("marketplace_search_input"),
+  }
+
+  BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val useRail = maxWidth >= 720.dp
+    Row(modifier = Modifier.fillMaxSize()) {
+      if (useRail) {
+        NavigationRail(
+          containerColor = DeepForestGreen,
+          contentColor = PaintedIvory,
+          modifier = Modifier.fillMaxHeight(),
+        ) {
+          val railColors =
+            NavigationRailItemDefaults.colors(
+              selectedIconColor = DeepPine,
+              selectedTextColor = SoftGold,
+              indicatorColor = GoldenHarvest,
+              unselectedIconColor = SoftSage,
+              unselectedTextColor = SoftSage,
+            )
+          NavigationRailItem(
+            selected = selectedTab == 0,
+            onClick = { selectedTab = 0 },
+            icon = { Icon(Icons.Default.Home, contentDescription = "Market") },
+            label = { Text("Market") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 1,
+            onClick = { selectedTab = 1 },
+            icon = {
+              BadgedBox(
+                badge = {
+                  if (cartItems.isNotEmpty()) {
+                    Badge(containerColor = GoldenHarvest) { Text(cartItems.size.toString(), color = DeepPine) }
+                  }
+                }
+              ) {
+                Icon(Icons.Default.ShoppingCart, contentDescription = "Cart")
+              }
+            },
+            label = { Text("Cart") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 2,
+            onClick = { selectedTab = 2 },
+            icon = { Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = "Orders") },
+            label = { Text("Orders") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 3,
+            onClick = { selectedTab = 3 },
+            icon = { Icon(Icons.Default.Person, contentDescription = "Account") },
+            label = { Text("Account") },
+            colors = railColors,
+          )
+        }
+      }
+
+      Scaffold(
+        modifier = Modifier.weight(1f),
+        bottomBar = {
+          if (!useRail) {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+              NavigationBarItem(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 },
+                icon = { Icon(Icons.Default.Home, contentDescription = "Market") },
+                label = { Text("Market") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 1,
+                onClick = { selectedTab = 1 },
+                icon = {
+                  BadgedBox(
+                    badge = {
+                      if (cartItems.isNotEmpty()) {
+                        Badge(containerColor = ForestGreen) { Text(cartItems.size.toString(), color = PaintedIvory) }
+                      }
+                    }
+                  ) {
+                    Icon(Icons.Default.ShoppingCart, contentDescription = "Cart")
+                  }
+                },
+                label = { Text("Cart") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 2,
+                onClick = { selectedTab = 2 },
+                icon = { Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = "Orders") },
+                label = { Text("Orders") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 3,
+                onClick = { selectedTab = 3 },
+                icon = { Icon(Icons.Default.Person, contentDescription = "Account") },
+                label = { Text("Account") },
               )
             }
+          }
+        }
+      ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+          when (selectedTab) {
+            0 -> {
+              LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+              ) {
+                item {
+                  AnimatedProduceShowcaseCard(
+                    activeCount = allProducts.size,
+                    organicCount = allProducts.count { it.organic },
+                  )
+                }
+                item {
+                  PromotionalBannerSlider(
+                    banners = banners,
+                    onBannerClick = { banner ->
+                      when (banner.targetSection) {
+                        "ORGANIC" -> if (!filters.organicOnly) viewModel.toggleOrganicOnly()
+                        "ORDERS" -> selectedTab = 2
+                        "BULK" -> viewModel.selectCategory(ProductCategory.GRAINS)
+                        else -> viewModel.selectCategory(null)
+                      }
+                    },
+                  )
+                }
+                item {
+                  OutlinedTextField(
+                    value = filters.searchQuery,
+                    onValueChange = viewModel::updateSearch,
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    placeholder = { Text("Search crops, farmers, or districts...") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().testTag("marketplace_search_input"),
+                  )
+                }
             item {
               Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -252,6 +384,7 @@ fun CustomerMarketplaceScreen(
                       wishlisted = saved,
                       onOpenDetails = { selectedProduct = product },
                       onToggleWishlist = { viewModel.toggleWishlist(product, saved) },
+                      onShareProduct = { ShareLinkHelper.shareProduct(context, product) },
                       onAddToCart = { viewModel.addToCart(product, 1L) },
                     )
                   }
@@ -330,6 +463,42 @@ fun CustomerMarketplaceScreen(
                       Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
                       Spacer(Modifier.width(6.dp))
                       Text("Sign Out")
+                    }
+                  }
+                }
+              }
+            }
+
+            item {
+              var linkCopied by remember { mutableStateOf(false) }
+              val appShareUrl = ShareLinkHelper.appBaseUrl(context)
+              Card(
+                colors = CardDefaults.cardColors(containerColor = SoftMintTint.copy(alpha = 0.55f)),
+                border = BorderStroke(1.dp, FreshLeafGreen),
+              ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                  Text("Share VILAIGUARD Marketplace", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = ForestGreen)
+                  Text(appShareUrl, style = MaterialTheme.typography.labelSmall, color = EarthBrown)
+                  Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                      onClick = {
+                        ShareLinkHelper.copyToClipboard(context, "VILAIGUARD Link", appShareUrl)
+                        linkCopied = true
+                      },
+                      modifier = Modifier.weight(1f).testTag("account_copy_link_button"),
+                    ) {
+                      Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                      Spacer(Modifier.width(6.dp))
+                      Text(if (linkCopied) "Copied!" else "Copy Link")
+                    }
+                    Button(
+                      onClick = { ShareLinkHelper.shareApp(context) },
+                      colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
+                      modifier = Modifier.weight(1f).testTag("account_share_app_button"),
+                    ) {
+                      Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                      Spacer(Modifier.width(6.dp))
+                      Text("Share Link")
                     }
                   }
                 }
@@ -423,6 +592,8 @@ fun CustomerMarketplaceScreen(
           }
         }
       }
+        }
+      }
     }
   }
 
@@ -444,12 +615,20 @@ fun CustomerMarketplaceScreen(
             Text(prod.name, style = MaterialTheme.typography.headlineLarge)
             Text("Grown by ${prod.farmerName} • ${prod.farmLocation}", style = MaterialTheme.typography.bodyMedium, color = EarthBrown)
           }
-          IconButton(onClick = { viewModel.toggleWishlist(prod, saved) }) {
-            Icon(
-              if (saved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-              contentDescription = "Wishlist",
-              tint = if (saved) TerracottaAlert else ForestGreen,
-            )
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(
+              onClick = { ShareLinkHelper.shareProduct(context, prod) },
+              modifier = Modifier.testTag("modal_share_product_${prod.id}"),
+            ) {
+              Icon(Icons.Default.Share, contentDescription = "Share product link", tint = ForestGreen)
+            }
+            IconButton(onClick = { viewModel.toggleWishlist(prod, saved) }) {
+              Icon(
+                if (saved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = "Wishlist",
+                tint = if (saved) TerracottaAlert else ForestGreen,
+              )
+            }
           }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -538,7 +717,15 @@ fun CustomerMarketplaceScreen(
       ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
           Text("Order ${liveOrder.orderNumber}", style = MaterialTheme.typography.headlineLarge, color = ForestGreen)
-          StatusPill(OrderStatus.fromRaw(liveOrder.orderStatus).label, FreshLeafGreen)
+          Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            StatusPill(OrderStatus.fromRaw(liveOrder.orderStatus).label, FreshLeafGreen)
+            IconButton(
+              onClick = { ShareLinkHelper.shareOrder(context, liveOrder) },
+              modifier = Modifier.testTag("share_order_${liveOrder.orderNumber}"),
+            ) {
+              Icon(Icons.Default.Share, contentDescription = "Share order tracking link", tint = ForestGreen)
+            }
+          }
         }
         Text(liveOrder.itemsSummary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
         Text("Farmer: ${liveOrder.farmerName} (${liveOrder.farmLocation})", style = MaterialTheme.typography.bodyMedium, color = EarthBrown)
@@ -627,6 +814,7 @@ private fun ProductMarketplaceCard(
   wishlisted: Boolean,
   onOpenDetails: () -> Unit,
   onToggleWishlist: () -> Unit,
+  onShareProduct: () -> Unit,
   onAddToCart: () -> Unit,
 ) {
   Card(
@@ -648,12 +836,24 @@ private fun ProductMarketplaceCard(
           }
           Text("${product.farmerName} • ${product.farmLocation}", style = MaterialTheme.typography.labelSmall, color = EarthBrown)
         }
-        IconButton(onClick = onToggleWishlist) {
-          Icon(
-            if (wishlisted) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-            contentDescription = "Save to wishlist",
-            tint = if (wishlisted) TerracottaAlert else MaterialTheme.colorScheme.onSurfaceVariant,
-          )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+          IconButton(
+            onClick = onShareProduct,
+            modifier = Modifier.testTag("share_product_${product.id}"),
+          ) {
+            Icon(
+              Icons.Default.Share,
+              contentDescription = "Share ${product.name}",
+              tint = ForestGreen,
+            )
+          }
+          IconButton(onClick = onToggleWishlist) {
+            Icon(
+              if (wishlisted) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+              contentDescription = "Save to wishlist",
+              tint = if (wishlisted) TerracottaAlert else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
         }
       }
       Spacer(Modifier.height(6.dp))
@@ -835,9 +1035,9 @@ private fun CustomerOrderCard(order: Order, onClick: () -> Unit) {
       }
       if (order.logisticsName.isNotBlank()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-          Icon(Icons.Default.LocalShipping, contentDescription = null, tint = GoldenHarvest, modifier = Modifier.size(14.dp))
+          Icon(Icons.Default.LocalShipping, contentDescription = null, tint = DeepAmber, modifier = Modifier.size(14.dp))
           Spacer(Modifier.width(4.dp))
-          Text("Carrier: ${order.logisticsName} • Tap to track timeline", style = MaterialTheme.typography.labelSmall)
+          Text("Carrier: ${order.logisticsName} • Tap to track timeline", style = MaterialTheme.typography.labelSmall, color = DeepAmber, fontWeight = FontWeight.SemiBold)
         }
       }
     }

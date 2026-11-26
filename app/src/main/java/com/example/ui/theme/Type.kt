@@ -27,24 +27,24 @@ val VilaiguardTypography =
       TextStyle(
         fontFamily = PlayfairDisplayFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        lineHeight = 42.sp,
+        fontSize = 34.sp,
+        lineHeight = 40.sp,
         letterSpacing = (-0.5).sp,
       ),
     displayMedium =
       TextStyle(
         fontFamily = PlayfairDisplayFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
-        lineHeight = 34.sp,
+        fontSize = 26.sp,
+        lineHeight = 32.sp,
         letterSpacing = (-0.25).sp,
       ),
     headlineLarge =
       TextStyle(
         fontFamily = PlayfairDisplayFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
+        fontWeight = FontWeight.Bold,
+        fontSize = 23.sp,
+        lineHeight = 29.sp,
       ),
     headlineMedium =
       TextStyle(
@@ -56,7 +56,7 @@ val VilaiguardTypography =
     titleLarge =
       TextStyle(
         fontFamily = PlusJakartaSansFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,
         fontSize = 18.sp,
         lineHeight = 24.sp,
       ),
@@ -70,7 +70,7 @@ val VilaiguardTypography =
     bodyLarge =
       TextStyle(
         fontFamily = PlusJakartaSansFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Medium,
         fontSize = 15.sp,
         lineHeight = 22.sp,
       ),
@@ -78,28 +78,28 @@ val VilaiguardTypography =
       TextStyle(
         fontFamily = PlusJakartaSansFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 13.5.sp,
+        fontSize = 14.sp,
         lineHeight = 20.sp,
       ),
     labelLarge =
       TextStyle(
         fontFamily = PlusJakartaSansFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
       ),
     labelMedium =
       TextStyle(
         fontFamily = PlusJakartaSansFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.5.sp,
+        lineHeight = 17.sp,
       ),
     labelSmall =
       TextStyle(
         fontFamily = PlusJakartaSansFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 14.sp,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 11.5.sp,
+        lineHeight = 15.sp,
       ),
   )

@@ -628,6 +628,130 @@ object DemoSeedHelper {
       ),
     )
 
+    seedBannerBatchEntries(db, batch, uid)
+
     batch.commit().await()
+  }
+
+  suspend fun ensureBannersSeeded(db: FirebaseFirestore, uid: String) {
+    val existing =
+      db.collection("banners")
+        .whereEqualTo("workspaceOwnerId", uid)
+        .limit(1)
+        .get()
+        .await()
+    if (!existing.isEmpty) return
+
+    val batch = db.batch()
+    seedBannerBatchEntries(db, batch, uid)
+    batch.commit().await()
+  }
+
+  private fun seedBannerBatchEntries(
+    db: FirebaseFirestore,
+    batch: com.google.firebase.firestore.WriteBatch,
+    uid: String,
+  ) {
+    data class SeedBanner(
+      val id: String,
+      val title: String,
+      val subtitle: String,
+      val ctaLabel: String,
+      val targetSection: String,
+      val themeStyle: String,
+      val imageKey: String,
+      val priority: Long,
+      val scheduleNote: String,
+    )
+
+    val banners =
+      listOf(
+        SeedBanner(
+          "banner_1_$uid",
+          "Fresh Harvest, Direct From Farmers",
+          "Morning-picked Nashik vegetables with transparent farm pricing and zero middlemen.",
+          "Shop Harvest",
+          "MARKET",
+          "FOREST",
+          "farmland",
+          1L,
+          "Featured Campaign",
+        ),
+        SeedBanner(
+          "banner_2_$uid",
+          "Support Local Farmers. Eat Fresh.",
+          "Every basket transfers 95% of order value straight to verified rural growers.",
+          "Browse Organic",
+          "ORGANIC",
+          "OLIVE",
+          "tomatoes",
+          2L,
+          "NPOP Organic Spotlight",
+        ),
+        SeedBanner(
+          "banner_3_$uid",
+          "Seasonal Vegetables Are Now Available",
+          "Heirloom tomatoes, tender bhindi, and hill spices harvested within the last 18 hours.",
+          "Explore Produce",
+          "MARKET",
+          "TERRACOTTA",
+          "okra",
+          3L,
+          "Winter Harvest Window",
+        ),
+        SeedBanner(
+          "banner_4_$uid",
+          "Farm Fresh Fruits Delivered to Your Door",
+          "Insulated cold-chain vans bring Alphonso mangoes and orchard fruit straight to your kitchen.",
+          "Track Orders",
+          "ORDERS",
+          "HARVEST",
+          "mango",
+          4L,
+          "Express Cold-Chain",
+        ),
+        SeedBanner(
+          "banner_5_$uid",
+          "Buy Direct. Save More. Support Agriculture.",
+          "5% direct-from-farm basket savings plus free delivery above ₹500 for homes & restaurants.",
+          "Bulk Packs",
+          "BULK",
+          "FOREST",
+          "basmati",
+          5L,
+          "Restaurant & Family Offer",
+        ),
+        SeedBanner(
+          "banner_6_$uid",
+          "Discover Local Farmers Near You.",
+          "Verified growers across Nashik, Ludhiana, Wayanad & Mandya ready for direct orders.",
+          "Meet Growers",
+          "FARMERS",
+          "OLIVE",
+          "spices",
+          6L,
+          "Verified Farmer Network",
+        ),
+      )
+
+    banners.forEach { b ->
+      batch.set(
+        db.collection("banners").document(b.id),
+        mapOf(
+          "workspaceOwnerId" to uid,
+          "title" to b.title,
+          "subtitle" to b.subtitle,
+          "ctaLabel" to b.ctaLabel,
+          "targetSection" to b.targetSection,
+          "themeStyle" to b.themeStyle,
+          "imageKey" to b.imageKey,
+          "active" to true,
+          "priority" to b.priority,
+          "scheduleNote" to b.scheduleNote,
+          "createdAt" to FieldValue.serverTimestamp(),
+          "updatedAt" to FieldValue.serverTimestamp(),
+        ),
+      )
+    }
   }
 }

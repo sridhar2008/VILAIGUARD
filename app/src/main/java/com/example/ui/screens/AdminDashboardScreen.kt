@@ -65,25 +65,52 @@ import com.example.domain.model.OrderStatus
 import com.example.domain.model.SupportTicket
 import com.example.domain.model.UiState
 import com.example.domain.model.VerificationStatus
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
+import androidx.compose.material3.Switch
+import com.example.domain.model.PromotionalBanner
+import com.example.ui.components.AnimatedAgriGlobeBanner
 import com.example.ui.components.EmptyStateCard
 import com.example.ui.components.MetricStatCard
+import com.example.ui.components.PromotionalBannerSlider
 import com.example.ui.components.SimpleBarChart
 import com.example.ui.components.StatusPill
 import com.example.ui.components.formatInr
+import com.example.ui.theme.DeepForestGreen
+import com.example.ui.theme.DeepPine
 import com.example.ui.theme.EarthBrown
 import com.example.ui.theme.ForestGreen
 import com.example.ui.theme.FreshLeafGreen
 import com.example.ui.theme.GoldenHarvest
+import com.example.ui.theme.PaintedIvory
 import com.example.ui.theme.SoftGold
+import com.example.ui.theme.SoftSage
 import com.example.ui.theme.TerracottaAlert
 import com.example.ui.viewmodel.VilaiguardViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboardScreen(viewModel: VilaiguardViewModel) {
   val context = LocalContext.current
   var selectedTab by remember { mutableIntStateOf(0) }
   var assigningOrder by remember { mutableStateOf<Order?>(null) }
   var respondingTicket by remember { mutableStateOf<SupportTicket?>(null) }
+  var editingBanner by remember { mutableStateOf<PromotionalBanner?>(null) }
+  var showBannerEditor by remember { mutableStateOf(false) }
   var orderSearch by remember { mutableStateOf("") }
 
   val stats by viewModel.stats.collectAsStateWithLifecycle()
@@ -92,90 +119,178 @@ fun AdminDashboardScreen(viewModel: VilaiguardViewModel) {
   val partnersState by viewModel.logisticsPartners.collectAsStateWithLifecycle()
   val productsState by viewModel.products.collectAsStateWithLifecycle()
   val ticketsState by viewModel.supportTickets.collectAsStateWithLifecycle()
+  val bannersState by viewModel.banners.collectAsStateWithLifecycle()
 
   val orders = (ordersState as? UiState.Success)?.data.orEmpty()
   val farmers = (farmersState as? UiState.Success)?.data.orEmpty()
   val partners = (partnersState as? UiState.Success)?.data.orEmpty()
   val products = (productsState as? UiState.Success)?.data.orEmpty()
   val tickets = (ticketsState as? UiState.Success)?.data.orEmpty()
+  val banners = (bannersState as? UiState.Success)?.data.orEmpty()
 
-  Scaffold(
-    bottomBar = {
-      NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-        NavigationBarItem(
-          selected = selectedTab == 0,
-          onClick = { selectedTab = 0 },
-          icon = { Icon(Icons.Default.Analytics, contentDescription = "Overview") },
-          label = { Text("Overview") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 1,
-          onClick = { selectedTab = 1 },
-          icon = { Icon(Icons.Default.AssignmentInd, contentDescription = "Orders") },
-          label = { Text("Dispatch") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 2,
-          onClick = { selectedTab = 2 },
-          icon = { Icon(Icons.Default.Groups, contentDescription = "Verification") },
-          label = { Text("Users") },
-        )
-        NavigationBarItem(
-          selected = selectedTab == 3,
-          onClick = { selectedTab = 3 },
-          icon = { Icon(Icons.Default.Inventory, contentDescription = "Catalog") },
-          label = { Text("Catalog") },
-        )
+  BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val useRail = maxWidth >= 720.dp
+    Row(modifier = Modifier.fillMaxSize()) {
+      if (useRail) {
+        NavigationRail(
+          containerColor = DeepForestGreen,
+          contentColor = PaintedIvory,
+          modifier = Modifier.fillMaxHeight(),
+        ) {
+          val railColors =
+            NavigationRailItemDefaults.colors(
+              selectedIconColor = DeepPine,
+              selectedTextColor = SoftGold,
+              indicatorColor = GoldenHarvest,
+              unselectedIconColor = SoftSage,
+              unselectedTextColor = SoftSage,
+            )
+          NavigationRailItem(
+            selected = selectedTab == 0,
+            onClick = { selectedTab = 0 },
+            icon = { Icon(Icons.Default.Analytics, contentDescription = "Overview") },
+            label = { Text("Overview") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 1,
+            onClick = { selectedTab = 1 },
+            icon = { Icon(Icons.Default.AssignmentInd, contentDescription = "Orders") },
+            label = { Text("Dispatch") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 2,
+            onClick = { selectedTab = 2 },
+            icon = { Icon(Icons.Default.Groups, contentDescription = "Verification") },
+            label = { Text("Users") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 3,
+            onClick = { selectedTab = 3 },
+            icon = { Icon(Icons.Default.Inventory, contentDescription = "Catalog") },
+            label = { Text("Catalog") },
+            colors = railColors,
+          )
+          NavigationRailItem(
+            selected = selectedTab == 4,
+            onClick = { selectedTab = 4 },
+            icon = { Icon(Icons.Default.Campaign, contentDescription = "Banners") },
+            label = { Text("Banners") },
+            colors = railColors,
+          )
+        }
       }
-    }
-  ) { innerPadding ->
-    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-      when (selectedTab) {
-        0 -> {
-          val districtSales =
-            orders.groupBy { it.deliveryDistrict.ifBlank { "Pune" } }
-              .mapValues { (_, list) -> list.sumOf { it.totalAmount } }
-              .entries.take(5).map { it.key.take(6) to it.value }
-              .ifEmpty { listOf("Pune" to 2400.0, "Nashik" to 1800.0) }
 
-          LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-          ) {
-            item {
-              Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+      Scaffold(
+        modifier = Modifier.weight(1f),
+        floatingActionButton = {
+          if (selectedTab == 4) {
+            FloatingActionButton(
+              onClick = {
+                editingBanner = null
+                showBannerEditor = true
+              },
+              containerColor = DeepForestGreen,
+              contentColor = PaintedIvory,
+              modifier = Modifier.testTag("admin_add_banner_fab"),
+            ) {
+              Icon(Icons.Default.Add, contentDescription = "Create promotional banner")
+            }
+          }
+        },
+        bottomBar = {
+          if (!useRail) {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+              NavigationBarItem(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 },
+                icon = { Icon(Icons.Default.Analytics, contentDescription = "Overview") },
+                label = { Text("Overview") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 1,
+                onClick = { selectedTab = 1 },
+                icon = { Icon(Icons.Default.AssignmentInd, contentDescription = "Orders") },
+                label = { Text("Dispatch") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 2,
+                onClick = { selectedTab = 2 },
+                icon = { Icon(Icons.Default.Groups, contentDescription = "Verification") },
+                label = { Text("Users") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 3,
+                onClick = { selectedTab = 3 },
+                icon = { Icon(Icons.Default.Inventory, contentDescription = "Catalog") },
+                label = { Text("Catalog") },
+              )
+              NavigationBarItem(
+                selected = selectedTab == 4,
+                onClick = { selectedTab = 4 },
+                icon = { Icon(Icons.Default.Campaign, contentDescription = "Banners") },
+                label = { Text("Banners") },
+              )
+            }
+          }
+        }
+      ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+          when (selectedTab) {
+            0 -> {
+              val districtSales =
+                orders.groupBy { it.deliveryDistrict.ifBlank { "Pune" } }
+                  .mapValues { (_, list) -> list.sumOf { it.totalAmount } }
+                  .entries.take(5).map { it.key.take(6) to it.value }
+                  .ifEmpty { listOf("Pune" to 2400.0, "Nashik" to 1800.0) }
+
+              LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
               ) {
-                Column(modifier = Modifier.weight(1f)) {
-                  Text("Admin Control Center", style = MaterialTheme.typography.headlineLarge, color = ForestGreen)
-                  Text("Monitor ecosystem supply chain, verifications & revenue", style = MaterialTheme.typography.bodyMedium, color = EarthBrown)
-                }
-                OutlinedButton(
-                  onClick = {
-                    val csv = viewModel.buildAdminCsvReport()
-                    val shareIntent =
-                      Intent(Intent.ACTION_SEND).apply {
-                        type = "text/csv"
-                        putExtra(Intent.EXTRA_SUBJECT, "VILAIGUARD Marketplace Report (CSV)")
-                        putExtra(Intent.EXTRA_TEXT, csv)
+                item {
+                  Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                  ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                      Text("Admin Control Center", style = MaterialTheme.typography.headlineLarge, color = ForestGreen)
+                      Text("Monitor ecosystem supply chain, verifications & revenue", style = MaterialTheme.typography.bodyMedium, color = EarthBrown)
+                    }
+                    OutlinedButton(
+                      onClick = {
+                        val csv = viewModel.buildAdminCsvReport()
+                        val shareIntent =
+                          Intent(Intent.ACTION_SEND).apply {
+                            type = "text/csv"
+                            putExtra(Intent.EXTRA_SUBJECT, "VILAIGUARD Marketplace Report (CSV)")
+                            putExtra(Intent.EXTRA_TEXT, csv)
+                          }
+                        runCatching { context.startActivity(Intent.createChooser(shareIntent, "Export CSV Report")) }
                       }
-                    runCatching { context.startActivity(Intent.createChooser(shareIntent, "Export CSV Report")) }
+                    ) {
+                      Icon(Icons.Default.Download, contentDescription = "Export CSV", modifier = Modifier.size(16.dp))
+                      Spacer(Modifier.width(4.dp))
+                      Text("CSV")
+                    }
                   }
-                ) {
-                  Icon(Icons.Default.Download, contentDescription = "Export CSV", modifier = Modifier.size(16.dp))
-                  Spacer(Modifier.width(4.dp))
-                  Text("CSV")
                 }
-              }
-            }
-            item {
-              Surface(color = SoftGold.copy(alpha = 0.6f), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.demo_analytics_notice), style = MaterialTheme.typography.labelSmall, color = ForestGreen, modifier = Modifier.padding(10.dp))
-              }
-            }
+                item {
+                  AnimatedAgriGlobeBanner(
+                    totalOrders = orders.size,
+                    farmersCount = farmers.size,
+                    bannersCount = banners.count { it.active },
+                  )
+                }
+                item {
+                  Surface(color = SoftGold.copy(alpha = 0.6f), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.demo_analytics_notice), style = MaterialTheme.typography.labelSmall, color = ForestGreen, modifier = Modifier.padding(10.dp))
+                  }
+                }
             item {
               Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
                 MetricStatCard("Platform GMV", formatInr(stats.totalRevenue), "Comm: ${formatInr(stats.platformCommission)}", Icons.Default.MonetizationOn, ForestGreen, Modifier.weight(1f))
@@ -250,10 +365,13 @@ fun AdminDashboardScreen(viewModel: VilaiguardViewModel) {
                   if (status == OrderStatus.READY_FOR_PICKUP || status == OrderStatus.LOGISTICS_ASSIGNED) {
                     Button(
                       onClick = { assigningOrder = order },
-                      colors = ButtonDefaults.buttonColors(containerColor = GoldenHarvest),
+                      colors = ButtonDefaults.buttonColors(containerColor = GoldenHarvest, contentColor = DeepPine),
                       modifier = Modifier.fillMaxWidth().testTag("admin_assign_${order.orderNumber}"),
                     ) {
-                      Text(if (order.logisticsName.isBlank()) "Assign Verified Delivery Partner" else "Reassign Delivery Partner")
+                      Text(
+                        if (order.logisticsName.isBlank()) "Assign Verified Delivery Partner" else "Reassign Delivery Partner",
+                        fontWeight = FontWeight.Bold,
+                      )
                     }
                   }
                 }
@@ -412,7 +530,108 @@ fun AdminDashboardScreen(viewModel: VilaiguardViewModel) {
             }
           }
         }
+
+        4 -> {
+          LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+          ) {
+            item {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+              ) {
+                Column(modifier = Modifier.weight(1f)) {
+                  Text("Promotional Banners CMS", style = MaterialTheme.typography.headlineLarge, color = ForestGreen)
+                  Text("Create, edit, prioritize & toggle live seasonal advertisements", style = MaterialTheme.typography.bodyMedium, color = EarthBrown)
+                }
+                Button(
+                  onClick = {
+                    editingBanner = null
+                    showBannerEditor = true
+                  },
+                  colors = ButtonDefaults.buttonColors(containerColor = ForestGreen, contentColor = PaintedIvory),
+                  modifier = Modifier.testTag("admin_add_banner_button"),
+                ) {
+                  Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                  Spacer(Modifier.width(4.dp))
+                  Text("Add Banner", fontWeight = FontWeight.Bold)
+                }
+              }
+            }
+            item {
+              Text("Live Customer Slider Preview", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = ForestGreen)
+              Spacer(Modifier.height(6.dp))
+              PromotionalBannerSlider(banners = banners, onBannerClick = {})
+            }
+            item {
+              Text("All Campaign Banners (${banners.size})", style = MaterialTheme.typography.titleLarge, color = ForestGreen)
+            }
+            if (banners.isEmpty()) {
+              item {
+                EmptyStateCard("No promotional banners", "Tap Add Banner to publish seasonal farmer campaigns.", Icons.Default.Campaign)
+              }
+            } else {
+              items(banners, key = { it.id }) { b ->
+                Card(
+                  colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                  border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                ) {
+                  Column(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                      modifier = Modifier.fillMaxWidth(),
+                      horizontalArrangement = Arrangement.SpaceBetween,
+                      verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                      Column(modifier = Modifier.weight(1f)) {
+                        Text(b.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(b.scheduleNote.ifBlank { "All Season" }, style = MaterialTheme.typography.labelSmall, color = EarthBrown)
+                      }
+                      Row(verticalAlignment = Alignment.CenterVertically) {
+                        StatusPill(
+                          text = if (b.active) "Active" else "Hidden",
+                          tone = if (b.active) FreshLeafGreen else TerracottaAlert,
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Switch(
+                          checked = b.active,
+                          onCheckedChange = { viewModel.toggleBannerActive(b.id, it) },
+                        )
+                      }
+                    }
+                    Text(b.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(
+                      modifier = Modifier.fillMaxWidth(),
+                      horizontalArrangement = Arrangement.SpaceBetween,
+                      verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                      Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        StatusPill("Target: ${b.targetSection}", ForestGreen)
+                        StatusPill("Style: ${b.themeStyle}", GoldenHarvest)
+                      }
+                      Row {
+                        IconButton(onClick = {
+                          editingBanner = b
+                          showBannerEditor = true
+                        }) {
+                          Icon(Icons.Default.Edit, contentDescription = "Edit Banner", tint = ForestGreen)
+                        }
+                        IconButton(onClick = { viewModel.deleteBanner(b.id) }) {
+                          Icon(Icons.Default.Delete, contentDescription = "Delete Banner", tint = TerracottaAlert)
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
+    }
+  }
     }
   }
 
@@ -464,5 +683,96 @@ fun AdminDashboardScreen(viewModel: VilaiguardViewModel) {
       },
       dismissButton = { TextButton(onClick = { respondingTicket = null }) { Text("Cancel") } },
     )
+  }
+
+  if (showBannerEditor) {
+    BannerEditorBottomSheet(
+      existing = editingBanner,
+      onDismiss = { showBannerEditor = false },
+      onSave = { title, subtitle, cta, section, theme, priority, schedule, active ->
+        viewModel.saveBanner(
+          existingId = editingBanner?.id,
+          title = title,
+          subtitle = subtitle,
+          ctaLabel = cta,
+          targetSection = section,
+          themeStyle = theme,
+          imageKey = editingBanner?.imageKey ?: "farmland",
+          active = active,
+          priority = priority,
+          scheduleNote = schedule,
+          onDone = { showBannerEditor = false },
+        )
+      },
+    )
+  }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BannerEditorBottomSheet(
+  existing: PromotionalBanner?,
+  onDismiss: () -> Unit,
+  onSave: (String, String, String, String, String, Long, String, Boolean) -> Unit,
+) {
+  var title by remember { mutableStateOf(existing?.title ?: "") }
+  var subtitle by remember { mutableStateOf(existing?.subtitle ?: "") }
+  var ctaLabel by remember { mutableStateOf(existing?.ctaLabel ?: "Explore Harvest") }
+  var targetSection by remember { mutableStateOf(existing?.targetSection ?: "MARKET") }
+  var themeStyle by remember { mutableStateOf(existing?.themeStyle ?: "FOREST") }
+  var priorityText by remember { mutableStateOf((existing?.priority ?: 1L).toString()) }
+  var scheduleNote by remember { mutableStateOf(existing?.scheduleNote ?: "Seasonal Highlight") }
+  var active by remember { mutableStateOf(existing?.active ?: true) }
+
+  ModalBottomSheet(onDismissRequest = onDismiss) {
+    Column(
+      modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(20.dp),
+      verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+      Text(
+        if (existing == null) "Publish Promotional Banner" else "Edit Promotional Banner",
+        style = MaterialTheme.typography.headlineLarge,
+        color = ForestGreen,
+      )
+      OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Headline Title") }, modifier = Modifier.fillMaxWidth())
+      OutlinedTextField(value = subtitle, onValueChange = { subtitle = it }, label = { Text("Promotional Message") }, minLines = 2, modifier = Modifier.fillMaxWidth())
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(value = ctaLabel, onValueChange = { ctaLabel = it }, label = { Text("CTA Button") }, modifier = Modifier.weight(1f))
+        OutlinedTextField(value = priorityText, onValueChange = { priorityText = it }, label = { Text("Order #") }, modifier = Modifier.width(100.dp))
+      }
+      OutlinedTextField(value = scheduleNote, onValueChange = { scheduleNote = it }, label = { Text("Campaign Badge / Schedule") }, modifier = Modifier.fillMaxWidth())
+
+      Text("Target Section", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        listOf("MARKET", "ORGANIC", "BULK", "FARMERS", "ORDERS").forEach { sec ->
+          FilterChip(selected = targetSection == sec, onClick = { targetSection = sec }, label = { Text(sec) })
+        }
+      }
+
+      Text("Oil-Paint Theme", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        listOf("FOREST", "OLIVE", "HARVEST", "TERRACOTTA").forEach { style ->
+          FilterChip(selected = themeStyle == style, onClick = { themeStyle = style }, label = { Text(style) })
+        }
+      }
+
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text("Visible in Customer & Farmer Dashboards", fontWeight = FontWeight.SemiBold)
+        Switch(checked = active, onCheckedChange = { active = it })
+      }
+
+      Row(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) { Text("Cancel") }
+        Button(
+          onClick = {
+            if (title.isNotBlank() && subtitle.isNotBlank() && ctaLabel.isNotBlank()) {
+              onSave(title, subtitle, ctaLabel, targetSection, themeStyle, priorityText.toLongOrNull() ?: 1L, scheduleNote, active)
+            }
+          },
+          colors = ButtonDefaults.buttonColors(containerColor = ForestGreen, contentColor = PaintedIvory),
+          modifier = Modifier.weight(1f),
+        ) { Text("Save Banner", fontWeight = FontWeight.Bold) }
+      }
+    }
   }
 }

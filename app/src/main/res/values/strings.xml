@@ -9,6 +9,7 @@
     <string name="cta_login_register">Login / Register</string>
     <string name="sign_in_google">Sign in with Google</string>
     <string name="demo_payment_notice">Demo payment mode: Simulated transaction for marketplace demonstration. No real funds are charged.</string>
-    <string name="demo_tracking_notice">Demo Route Preview: Live GPS integration unavailable without Maps API key.</string>
+    <string name="demo_tracking_notice">Keyless Route Preview: Track delivery progress visually and launch external Maps directions anytime.</string>
     <string name="demo_analytics_notice">Demo Analytics &amp; Insights computed from workspace records and seasonal models.</string>
+    <string name="share_app_url">vilaiguard://app</string>
 </resources>

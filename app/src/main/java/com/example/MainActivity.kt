@@ -1,5 +1,6 @@
 package com.example
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -10,9 +11,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +42,8 @@ import com.example.data.firestore.signOut
 import com.example.domain.model.UiState
 import com.example.domain.model.UserRole
 import com.example.ui.components.RoleSwitcherBar
+import com.example.ui.components.ShareLinkHelper
+import com.example.ui.components.VilaiguardDeepLink
 import com.example.ui.screens.AdminDashboardScreen
 import com.example.ui.screens.CustomerMarketplaceScreen
 import com.example.ui.screens.FarmerDashboardScreen
@@ -43,6 +51,8 @@ import com.example.ui.screens.LandingScreen
 import com.example.ui.screens.LogisticsDashboardScreen
 import com.example.ui.screens.NotificationsBottomSheet
 import com.example.ui.screens.RoleRegistrationBottomSheet
+import com.example.ui.theme.PaintedIvory
+import com.example.ui.theme.TerracottaAlert
 import com.example.ui.theme.VilaiguardTheme
 import com.example.ui.viewmodel.VilaiguardViewModel
 import com.google.firebase.Firebase
@@ -51,19 +61,35 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
+  private val incomingDeepLink = mutableStateOf<VilaiguardDeepLink?>(null)
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+    incomingDeepLink.value = ShareLinkHelper.parseDeepLink(intent)
     setContent {
       VilaiguardTheme {
-        VilaiguardAppRoot()
+        VilaiguardAppRoot(
+          pendingDeepLink = incomingDeepLink.value,
+          onConsumeDeepLink = { incomingDeepLink.value = null },
+        )
       }
     }
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    ShareLinkHelper.parseDeepLink(intent)?.let { incomingDeepLink.value = it }
   }
 }
 
 @Composable
-fun VilaiguardAppRoot(auth: FirebaseAuth = Firebase.auth) {
+fun VilaiguardAppRoot(
+  auth: FirebaseAuth = Firebase.auth,
+  pendingDeepLink: VilaiguardDeepLink? = null,
+  onConsumeDeepLink: () -> Unit = {},
+) {
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
   val credentialManager = remember(context) { CredentialManager.create(context) }
@@ -95,6 +121,8 @@ fun VilaiguardAppRoot(auth: FirebaseAuth = Firebase.auth) {
         displayName = user.displayName ?: "VILAIGUARD Member",
         email = user.email ?: "",
         initialIntentRole = desiredIntentRole,
+        pendingDeepLink = pendingDeepLink,
+        onConsumeDeepLink = onConsumeDeepLink,
         onClearIntentRole = { desiredIntentRole = null },
         onSignOut = {
           signOut(credentialManager = credentialManager, scope = scope)
@@ -110,9 +138,12 @@ private fun AuthenticatedVilaiguardApp(
   displayName: String,
   email: String,
   initialIntentRole: UserRole?,
+  pendingDeepLink: VilaiguardDeepLink?,
+  onConsumeDeepLink: () -> Unit,
   onClearIntentRole: () -> Unit,
   onSignOut: () -> Unit,
 ) {
+  val context = LocalContext.current
   val viewModel: VilaiguardViewModel =
     viewModel(
       key = currentUserId,
@@ -138,6 +169,7 @@ private fun AuthenticatedVilaiguardApp(
 
   var showNotifications by remember { mutableStateOf(false) }
   var showRoleRegistration by remember { mutableStateOf(false) }
+  var showLogoutConfirm by remember { mutableStateOf(false) }
 
   LaunchedEffect(viewModel) {
     viewModel.toastEvents.collect { msg ->
@@ -152,6 +184,20 @@ private fun AuthenticatedVilaiguardApp(
         showRoleRegistration = true
       }
       onClearIntentRole()
+    }
+  }
+
+  LaunchedEffect(pendingDeepLink, profileState) {
+    if (pendingDeepLink is VilaiguardDeepLink.SwitchRole && profileState is UiState.Success) {
+      viewModel.switchRole(pendingDeepLink.role)
+      onConsumeDeepLink()
+    } else if ((pendingDeepLink is VilaiguardDeepLink.OpenProduct || pendingDeepLink is VilaiguardDeepLink.OpenOrder) &&
+      profileState is UiState.Success
+    ) {
+      val currentRole = UserRole.fromRaw((profileState as UiState.Success).data?.activeDemoRole)
+      if (currentRole != UserRole.CUSTOMER) {
+        viewModel.switchRole(UserRole.CUSTOMER)
+      }
     }
   }
 
@@ -174,6 +220,8 @@ private fun AuthenticatedVilaiguardApp(
           unreadNotifications = unreadCount,
           onSelectRole = { role -> viewModel.switchRole(role) },
           onOpenNotifications = { showNotifications = true },
+          onShareApp = { ShareLinkHelper.shareApp(context) },
+          onRequestSignOut = { showLogoutConfirm = true },
         )
       }
 
@@ -183,8 +231,10 @@ private fun AuthenticatedVilaiguardApp(
             CustomerMarketplaceScreen(
               viewModel = viewModel,
               profile = profile,
+              pendingDeepLink = pendingDeepLink,
+              onConsumeDeepLink = onConsumeDeepLink,
               onEditRoleProfile = { showRoleRegistration = true },
-              onSignOut = onSignOut,
+              onSignOut = { showLogoutConfirm = true },
             )
           UserRole.FARMER ->
             FarmerDashboardScreen(
@@ -202,6 +252,30 @@ private fun AuthenticatedVilaiguardApp(
         }
       }
     }
+  }
+
+  if (showLogoutConfirm) {
+    AlertDialog(
+      onDismissRequest = { showLogoutConfirm = false },
+      title = { Text("Sign out of VILAIGUARD?") },
+      text = {
+        Text(
+          "You will return to the VILAIGUARD landing page and clear your active session. You can sign back in anytime with your Google account."
+        )
+      },
+      confirmButton = {
+        Button(
+          onClick = {
+            showLogoutConfirm = false
+            onSignOut()
+          },
+          colors = ButtonDefaults.buttonColors(containerColor = TerracottaAlert, contentColor = PaintedIvory),
+        ) { Text("Logout") }
+      },
+      dismissButton = {
+        TextButton(onClick = { showLogoutConfirm = false }) { Text("Stay Signed In") }
+      },
+    )
   }
 
   if (showNotifications) {

@@ -2,32 +2,44 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// VILAIGUARD Signature Brand Palette
-val ForestGreen = Color(0xFF1B4332)
-val DeepPine = Color(0xFF122E22)
-val FreshLeafGreen = Color(0xFF40916C)
-val SproutGreen = Color(0xFF52B788)
-val SoftMintTint = Color(0xFFD8F3DC)
+// VILAIGUARD Oil-Paint Inspired Agricultural Palette
+val DeepForestGreen = Color(0xFF183B2B)
+val ForestGreen = DeepForestGreen
+val DeepPine = Color(0xFF10281D)
+val MossGreen = Color(0xFF456B45)
+val FreshLeafGreen = MossGreen
+val OliveGreen = Color(0xFF75834B)
+val SproutGreen = OliveGreen
+val SoftSage = Color(0xFFA9B89B)
+val SoftMintTint = Color(0xFFE5ECDC)
 
-val EarthBrown = Color(0xFF6C4A32)
-val WarmSoil = Color(0xFF8B5E3C)
-val WarmCream = Color(0xFFFAF7F0)
-val SoftParchment = Color(0xFFF2ECE1)
-val PureWhite = Color(0xFFFFFFFF)
-val DarkCharcoal = Color(0xFF1E2421)
-val MutedSlate = Color(0xFF5A655F)
-val SubtleBorder = Color(0xFFE0D8C8)
+val HarvestGold = Color(0xFFD4A64A)
+val GoldenHarvest = HarvestGold
+val SoftGold = Color(0xFFF6E9CC)
+val DeepAmber = Color(0xFF7A5108)
 
-val GoldenHarvest = Color(0xFFD99B26)
-val SoftGold = Color(0xFFF6E7C1)
-val DeepAmber = Color(0xFF8F5F0B)
+val BurntOrange = Color(0xFFB86438)
+val Terracotta = Color(0xFFA65F46)
+val TerracottaAlert = Terracotta
+val SoftTerracotta = Color(0xFFF7E7E1)
 
-val TerracottaAlert = Color(0xFFC44536)
-val SoftTerracotta = Color(0xFFFBEAE8)
+val WarmCanvasCream = Color(0xFFF5EBDD)
+val WarmCream = WarmCanvasCream
+val PaintedIvory = Color(0xFFFFF9F0)
+val PureWhite = PaintedIvory
+val SoftParchment = Color(0xFFEDE0CE)
 
-// Dark Mode Surfaces
-val DarkFieldBg = Color(0xFF111915)
-val DarkCardSurface = Color(0xFF1A251F)
-val DarkCardElevated = Color(0xFF23322A)
-val DarkTextPrimary = Color(0xFFF1F5F2)
-val DarkTextMuted = Color(0xFFB4C0B9)
+val DarkEarthBrown = Color(0xFF473329)
+val EarthBrown = DarkEarthBrown
+val WarmSoil = Color(0xFF735140)
+val DeepCharcoal = Color(0xFF252821)
+val DarkCharcoal = DeepCharcoal
+val MutedSlate = Color(0xFF52564D)
+val SubtleBorder = Color(0xFFCCC0AC)
+
+// Dark Mode Oil-Canvas Surfaces (Balanced Contrast)
+val DarkFieldBg = Color(0xFF13221B)
+val DarkCardSurface = Color(0xFF1B2E24)
+val DarkCardElevated = Color(0xFF243C30)
+val DarkTextPrimary = Color(0xFFFFF9F0)
+val DarkTextMuted = Color(0xFFC5D0C0)

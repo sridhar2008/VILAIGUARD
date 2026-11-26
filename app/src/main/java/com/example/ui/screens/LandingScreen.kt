@@ -26,17 +26,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Agriculture
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -69,8 +72,11 @@ import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import com.example.R
 import com.example.data.firestore.onGoogleSignInClicked
+import com.example.domain.model.PromotionalBanner
 import com.example.domain.model.UserRole
 import com.example.ui.components.AnimatedFarmlandHeroBackground
+import com.example.ui.components.PromotionalBannerSlider
+import com.example.ui.components.ShareLinkHelper
 import com.example.ui.components.StatusPill
 import com.example.ui.components.VilaiguardBrandLogo
 import com.example.ui.theme.DeepPine
@@ -78,6 +84,7 @@ import com.example.ui.theme.EarthBrown
 import com.example.ui.theme.ForestGreen
 import com.example.ui.theme.FreshLeafGreen
 import com.example.ui.theme.GoldenHarvest
+import com.example.ui.theme.HarvestGold
 import com.example.ui.theme.SoftGold
 import com.example.ui.theme.SoftMintTint
 import com.example.ui.theme.WarmCream
@@ -136,27 +143,50 @@ fun LandingScreen(
             verticalAlignment = Alignment.CenterVertically,
           ) {
             VilaiguardBrandLogo(size = 42.dp, showText = true, lightText = true)
-            Surface(
-              shape = RoundedCornerShape(20.dp),
-              color = Color.White.copy(alpha = 0.16f),
-              border = BorderStroke(1.dp, GoldenHarvest.copy(alpha = 0.6f)),
-              modifier =
-                Modifier.testTag("hero_login_chip")
-                  .clickable(enabled = !isLoading) { launchGoogleSignIn(UserRole.CUSTOMER) },
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-              Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
+              IconButton(
+                onClick = { ShareLinkHelper.shareApp(context) },
+                modifier = Modifier.size(48.dp).testTag("hero_share_button"),
               ) {
-                Icon(Icons.Default.Login, contentDescription = "Login", tint = SoftGold, modifier = Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Login / Register", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                Icon(
+                  imageVector = Icons.Default.Share,
+                  contentDescription = "Share VILAIGUARD link",
+                  tint = SoftGold,
+                )
+              }
+              Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color.White.copy(alpha = 0.16f),
+                border = BorderStroke(1.dp, GoldenHarvest.copy(alpha = 0.6f)),
+                modifier =
+                  Modifier.testTag("hero_login_chip")
+                    .clickable(enabled = !isLoading) { launchGoogleSignIn(UserRole.CUSTOMER) },
+              ) {
+                Row(
+                  modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                  verticalAlignment = Alignment.CenterVertically,
+                ) {
+                  Icon(Icons.AutoMirrored.Filled.Login, contentDescription = "Login", tint = SoftGold, modifier = Modifier.size(16.dp))
+                  Spacer(Modifier.width(6.dp))
+                  Text("Login / Register", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                }
               }
             }
           }
 
           Column(modifier = Modifier.widthIn(max = 600.dp)) {
-            StatusPill("Direct Farm-to-Family Network", GoldenHarvest)
+            Surface(shape = RoundedCornerShape(12.dp), color = HarvestGold) {
+              Text(
+                text = "Direct Farm-to-Family Network",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = DeepPine,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+              )
+            }
             Spacer(Modifier.height(10.dp))
             Text(
               text = stringResource(R.string.hero_headline),
@@ -232,6 +262,57 @@ fun LandingScreen(
             }
           }
         }
+      }
+    }
+
+    // 1.5 MOVING PROMOTIONAL BANNER SHOWCASE
+    item {
+      val previewBanners =
+        remember {
+          listOf(
+            PromotionalBanner(
+              id = "landing_b1",
+              title = "Fresh Harvest, Direct From Farmers",
+              subtitle = "Morning-picked Nashik vegetables with transparent farm pricing and zero middlemen.",
+              ctaLabel = "Shop Harvest",
+              targetSection = "MARKET",
+              themeStyle = "FOREST",
+              scheduleNote = "Featured Campaign",
+            ),
+            PromotionalBanner(
+              id = "landing_b2",
+              title = "Support Local Farmers. Eat Fresh.",
+              subtitle = "Every basket sends 95% of order value straight to verified rural growers.",
+              ctaLabel = "Browse Organic",
+              targetSection = "ORGANIC",
+              themeStyle = "OLIVE",
+              scheduleNote = "NPOP Organic",
+            ),
+            PromotionalBanner(
+              id = "landing_b3",
+              title = "Seasonal Vegetables Are Now Available",
+              subtitle = "Heirloom tomatoes, tender bhindi, and hill spices harvested within 18 hours.",
+              ctaLabel = "Explore Market",
+              targetSection = "MARKET",
+              themeStyle = "TERRACOTTA",
+              scheduleNote = "Winter Window",
+            ),
+            PromotionalBanner(
+              id = "landing_b4",
+              title = "Buy Direct. Save More. Support Agriculture.",
+              subtitle = "5% direct-from-farm basket savings plus free delivery above ₹500.",
+              ctaLabel = "Sign In & Save",
+              targetSection = "BULK",
+              themeStyle = "HARVEST",
+              scheduleNote = "Direct Offer",
+            ),
+          )
+        }
+      Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp)) {
+        PromotionalBannerSlider(
+          banners = previewBanners,
+          onBannerClick = { launchGoogleSignIn(UserRole.CUSTOMER) },
+        )
       }
     }
 
@@ -470,13 +551,48 @@ fun LandingScreen(
 
     // 12. FOOTER
     item {
+      var copiedNotice by remember { mutableStateOf(false) }
+      val shareUrl = ShareLinkHelper.appBaseUrl(context)
       HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
       Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
       ) {
         VilaiguardBrandLogo(size = 38.dp, showText = true, lightText = false)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(10.dp))
+        Card(
+          colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+          border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+          modifier = Modifier.fillMaxWidth(),
+        ) {
+          Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Share VILAIGUARD Link", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = ForestGreen)
+            Text(shareUrl, style = MaterialTheme.typography.labelSmall, color = EarthBrown)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+              OutlinedButton(
+                onClick = {
+                  ShareLinkHelper.copyToClipboard(context, "VILAIGUARD Link", shareUrl)
+                  copiedNotice = true
+                },
+                modifier = Modifier.weight(1f).testTag("copy_app_link_button"),
+              ) {
+                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(if (copiedNotice) "Copied!" else "Copy Link")
+              }
+              Button(
+                onClick = { ShareLinkHelper.shareApp(context) },
+                colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
+                modifier = Modifier.weight(1f).testTag("share_app_footer_button"),
+              ) {
+                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Share App")
+              }
+            }
+          }
+        }
+        Spacer(Modifier.height(10.dp))
         Text(
           "VILAIGUARD Direct Agricultural Marketplace • Powered by Cloud Firestore",
           style = MaterialTheme.typography.labelSmall,
