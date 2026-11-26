@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">VILAIGUARD</string>
+    <string name="brand_tagline">From Our Fields to Your Family.</string>
+    <string name="hero_headline">Fresh From Farmers. Fair For Everyone.</string>
+    <string name="hero_subheadline">Discover fresh farm produce directly from local farmers. Fair prices, transparent sourcing and reliable delivery.</string>
+    <string name="cta_explore_products">Explore Products</string>
+    <string name="cta_join_farmer">Join as Farmer</string>
+    <string name="cta_become_delivery">Become a Delivery Partner</string>
+    <string name="cta_login_register">Login / Register</string>
+    <string name="sign_in_google">Sign in with Google</string>
+    <string name="demo_payment_notice">Demo payment mode: Simulated transaction for marketplace demonstration. No real funds are charged.</string>
+    <string name="demo_tracking_notice">Demo Route Preview: Live GPS integration unavailable without Maps API key.</string>
+    <string name="demo_analytics_notice">Demo Analytics &amp; Insights computed from workspace records and seasonal models.</string>
+</resources>

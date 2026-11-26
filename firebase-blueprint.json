@@ -1,0 +1,358 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Registered user account and role-specific profile details",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["FARMER", "CUSTOMER", "LOGISTICS", "ADMIN"] },
+        "activeDemoRole": { "type": "string", "enum": ["FARMER", "CUSTOMER", "LOGISTICS", "ADMIN"] },
+        "village": { "type": "string" },
+        "district": { "type": "string" },
+        "state": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "pinCode": { "type": "string" },
+        "farmName": { "type": "string" },
+        "farmSizeAcres": { "type": "number" },
+        "farmingType": { "type": "string" },
+        "bankSummary": { "type": "string" },
+        "vehicleType": { "type": "string" },
+        "vehicleNumber": { "type": "string" },
+        "deliveryArea": { "type": "string" },
+        "available": { "type": "boolean" },
+        "verificationStatus": { "type": "string", "enum": ["PENDING", "VERIFIED", "REJECTED", "SUSPENDED"] },
+        "accountStatus": { "type": "string", "enum": ["ACTIVE", "SUSPENDED"] },
+        "profileImageKey": { "type": "string" },
+        "demoSeeded": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp" }
+      },
+      "required": ["userId", "fullName", "email", "role", "activeDemoRole", "verificationStatus", "accountStatus", "createdAt", "updatedAt"]
+    },
+    "FarmerRecord": {
+      "title": "FarmerRecord",
+      "description": "Farmer profile in the agricultural marketplace",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "farmerUserId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "farmName": { "type": "string" },
+        "village": { "type": "string" },
+        "district": { "type": "string" },
+        "state": { "type": "string" },
+        "farmSizeAcres": { "type": "number" },
+        "farmingType": { "type": "string" },
+        "phone": { "type": "string" },
+        "bankSummary": { "type": "string" },
+        "verificationStatus": { "type": "string", "enum": ["PENDING", "VERIFIED", "REJECTED", "SUSPENDED"] },
+        "accountStatus": { "type": "string", "enum": ["ACTIVE", "SUSPENDED"] },
+        "totalSales": { "type": "number" },
+        "completedOrders": { "type": "integer" },
+        "rating": { "type": "number" },
+        "documentNote": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "farmerUserId", "fullName", "farmName", "district", "state", "verificationStatus", "accountStatus", "createdAt", "updatedAt"]
+    },
+    "LogisticsPartner": {
+      "title": "LogisticsPartner",
+      "description": "Delivery partner profile and performance metrics",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "logisticsUserId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "phone": { "type": "string" },
+        "vehicleType": { "type": "string" },
+        "vehicleNumber": { "type": "string" },
+        "deliveryArea": { "type": "string" },
+        "available": { "type": "boolean" },
+        "verificationStatus": { "type": "string", "enum": ["PENDING", "VERIFIED", "REJECTED", "SUSPENDED"] },
+        "accountStatus": { "type": "string", "enum": ["ACTIVE", "SUSPENDED"] },
+        "completedDeliveries": { "type": "integer" },
+        "onTimeRate": { "type": "number" },
+        "earningsTotal": { "type": "number" },
+        "documentNote": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "logisticsUserId", "fullName", "vehicleType", "vehicleNumber", "deliveryArea", "available", "verificationStatus", "accountStatus", "createdAt", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Agricultural product listed by a farmer",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "farmerId": { "type": "string" },
+        "farmerUserId": { "type": "string" },
+        "farmerName": { "type": "string" },
+        "farmLocation": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["VEGETABLES", "FRUITS", "GRAINS", "PULSES", "DAIRY", "SEEDS", "SPICES", "OTHER"] },
+        "description": { "type": "string" },
+        "pricePerUnit": { "type": "number" },
+        "unit": { "type": "string", "enum": ["kg", "gram", "litre", "packet", "piece"] },
+        "stockQuantity": { "type": "integer" },
+        "harvestDate": { "type": "string" },
+        "organic": { "type": "boolean" },
+        "verified": { "type": "boolean" },
+        "available": { "type": "boolean" },
+        "imageKey": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "integer" },
+        "approvalStatus": { "type": "string", "enum": ["APPROVED", "PENDING", "REMOVED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "farmerId", "farmerUserId", "farmerName", "farmLocation", "name", "category", "pricePerUnit", "unit", "stockQuantity", "organic", "verified", "available", "approvalStatus", "createdAt", "updatedAt"]
+    },
+    "CartItem": {
+      "title": "CartItem",
+      "description": "Item in customer shopping cart",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "farmerId": { "type": "string" },
+        "farmerName": { "type": "string" },
+        "farmLocation": { "type": "string" },
+        "unit": { "type": "string" },
+        "pricePerUnit": { "type": "number" },
+        "quantity": { "type": "integer" },
+        "imageKey": { "type": "string" },
+        "organic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "productName", "farmerId", "farmerName", "unit", "pricePerUnit", "quantity", "createdAt", "updatedAt"]
+    },
+    "SavedAddress": {
+      "title": "SavedAddress",
+      "description": "Customer saved delivery address",
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "recipientName": { "type": "string" },
+        "phone": { "type": "string" },
+        "streetAddress": { "type": "string" },
+        "city": { "type": "string" },
+        "district": { "type": "string" },
+        "state": { "type": "string" },
+        "pinCode": { "type": "string" },
+        "defaultAddress": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["label", "recipientName", "phone", "streetAddress", "city", "district", "pinCode", "defaultAddress", "createdAt", "updatedAt"]
+    },
+    "WishlistItem": {
+      "title": "WishlistItem",
+      "description": "Customer wishlisted product",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "farmerName": { "type": "string" },
+        "pricePerUnit": { "type": "number" },
+        "unit": { "type": "string" },
+        "imageKey": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "productName", "farmerName", "pricePerUnit", "unit", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Core interconnected agricultural order",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "customerUserId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "deliveryAddress": { "type": "string" },
+        "deliveryDistrict": { "type": "string" },
+        "deliveryCity": { "type": "string" },
+        "deliveryPinCode": { "type": "string" },
+        "farmerId": { "type": "string" },
+        "farmerUserId": { "type": "string" },
+        "farmerName": { "type": "string" },
+        "farmLocation": { "type": "string" },
+        "farmerPhone": { "type": "string" },
+        "logisticsId": { "type": "string" },
+        "logisticsUserId": { "type": "string" },
+        "logisticsName": { "type": "string" },
+        "logisticsPhone": { "type": "string" },
+        "logisticsVehicle": { "type": "string" },
+        "itemsSummary": { "type": "string" },
+        "itemsCount": { "type": "integer" },
+        "subtotal": { "type": "number" },
+        "deliveryFee": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "platformCommission": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "paymentStatus": { "type": "string", "enum": ["PENDING", "DEMO_PAID", "COD_DUE", "SETTLED", "REFUNDED"] },
+        "orderStatus": { "type": "string", "enum": ["ORDER_PLACED", "ACCEPTED", "PREPARING", "READY_FOR_PICKUP", "LOGISTICS_ASSIGNED", "PICKED_UP", "IN_TRANSIT", "DELIVERED", "CANCELLED"] },
+        "logisticsStatus": { "type": "string", "enum": ["UNASSIGNED", "ASSIGNED", "ACCEPTED", "REACHING_FARMER", "ARRIVED_AT_FARM", "PICKUP_CONFIRMED", "IN_TRANSIT", "REACHING_CUSTOMER", "DELIVERED", "FAILED_DELIVERY", "RETURNED"] },
+        "rejectionReason": { "type": "string" },
+        "pickupInstructions": { "type": "string" },
+        "deliveryInstructions": { "type": "string" },
+        "otpCode": { "type": "string" },
+        "estimatedDelivery": { "type": "string" },
+        "proofNote": { "type": "string" },
+        "stockRestored": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "orderNumber", "customerUserId", "customerName", "deliveryAddress", "deliveryDistrict", "farmerId", "farmerUserId", "farmerName", "farmLocation", "itemsSummary", "itemsCount", "subtotal", "deliveryFee", "totalAmount", "paymentMethod", "paymentStatus", "orderStatus", "logisticsStatus", "createdAt", "updatedAt"]
+    },
+    "OrderItem": {
+      "title": "OrderItem",
+      "description": "Line item inside an order",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "customerUserId": { "type": "string" },
+        "farmerUserId": { "type": "string" },
+        "logisticsUserId": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "unit": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "unitPrice": { "type": "number" },
+        "lineTotal": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "customerUserId", "farmerUserId", "productId", "productName", "unit", "quantity", "unitPrice", "lineTotal", "createdAt"]
+    },
+    "OrderHistoryEntry": {
+      "title": "OrderHistoryEntry",
+      "description": "Status history audit record for an order",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "customerUserId": { "type": "string" },
+        "farmerUserId": { "type": "string" },
+        "logisticsUserId": { "type": "string" },
+        "status": { "type": "string" },
+        "actorRole": { "type": "string" },
+        "note": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "customerUserId", "farmerUserId", "status", "actorRole", "note", "createdAt"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "Cross-role notification triggered by order lifecycle events",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "recipientUserId": { "type": "string" },
+        "targetRole": { "type": "string", "enum": ["FARMER", "CUSTOMER", "LOGISTICS", "ADMIN", "ALL"] },
+        "orderId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "category": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "recipientUserId", "targetRole", "title", "message", "read", "createdAt"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "Customer or farmer support and quality report ticket",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "orderId": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["OPEN", "IN_REVIEW", "RESOLVED"] },
+        "adminResponse": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "userId", "userName", "subject", "message", "status", "createdAt", "updatedAt"]
+    },
+    "ProductReview": {
+      "title": "ProductReview",
+      "description": "Product quality review from a customer",
+      "type": "object",
+      "properties": {
+        "workspaceOwnerId": { "type": "string" },
+        "productId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "rating": { "type": "integer" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["workspaceOwnerId", "productId", "userId", "userName", "rating", "comment", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User accounts and role profiles"
+    },
+    "/users/{userId}/cart_items/{itemId}": {
+      "schema": { "$ref": "#/entities/CartItem" },
+      "description": "Shopping cart items scoped to user"
+    },
+    "/users/{userId}/addresses/{addressId}": {
+      "schema": { "$ref": "#/entities/SavedAddress" },
+      "description": "Saved delivery addresses scoped to user"
+    },
+    "/users/{userId}/wishlist/{productId}": {
+      "schema": { "$ref": "#/entities/WishlistItem" },
+      "description": "Wishlisted products scoped to user"
+    },
+    "/farmers/{farmerId}": {
+      "schema": { "$ref": "#/entities/FarmerRecord" },
+      "description": "Farmer profiles and verification state"
+    },
+    "/logistics_partners/{partnerId}": {
+      "schema": { "$ref": "#/entities/LogisticsPartner" },
+      "description": "Delivery partner profiles and assignments metrics"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Agricultural produce catalog"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Interconnected marketplace orders"
+    },
+    "/orders/{orderId}/items/{itemId}": {
+      "schema": { "$ref": "#/entities/OrderItem" },
+      "description": "Order line items"
+    },
+    "/orders/{orderId}/history/{historyId}": {
+      "schema": { "$ref": "#/entities/OrderHistoryEntry" },
+      "description": "Immutable order lifecycle status history"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/AppNotification" },
+      "description": "Cross-role order and system notifications"
+    },
+    "/support_tickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicket" },
+      "description": "Support and quality feedback tickets"
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/ProductReview" },
+      "description": "Customer product reviews"
+    }
+  }
+}
